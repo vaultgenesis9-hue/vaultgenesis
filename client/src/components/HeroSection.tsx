@@ -12,6 +12,26 @@ interface Particle {
   life: number;
 }
 
+interface ShootingStar {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  length: number;
+  opacity: number;
+  life: number;
+}
+
+interface Rocket {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  angle: number;
+  life: number;
+  maxLife: number;
+}
+
 export default function HeroSection() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -33,23 +53,55 @@ export default function HeroSection() {
     let time = 0;
 
     const particles: Particle[] = [];
+    const shootingStars: ShootingStar[] = [];
+    const rockets: Rocket[] = [];
 
-    // Create initial particles
-    const createParticles = () => {
-      for (let i = 0; i < 50; i++) {
+    // Create initial particles (stars)
+    const createStars = () => {
+      for (let i = 0; i < 100; i++) {
         particles.push({
           x: Math.random() * canvas.offsetWidth,
-          y: Math.random() * canvas.offsetHeight,
-          vx: (Math.random() - 0.5) * 0.5,
-          vy: (Math.random() - 0.5) * 0.5,
-          size: Math.random() * 2 + 0.5,
-          opacity: Math.random() * 0.5 + 0.2,
-          life: Math.random() * 100 + 50,
+          y: Math.random() * canvas.offsetHeight * 0.7,
+          vx: 0,
+          vy: 0,
+          size: Math.random() * 1.5 + 0.3,
+          opacity: Math.random() * 0.6 + 0.2,
+          life: 100,
         });
       }
     };
 
-    createParticles();
+    createStars();
+
+    // Create a shooting star periodically
+    const createShootingStar = () => {
+      if (Math.random() < 0.02) {
+        shootingStars.push({
+          x: Math.random() * canvas.offsetWidth,
+          y: Math.random() * canvas.offsetHeight * 0.6,
+          vx: Math.random() * 3 + 2,
+          vy: Math.random() * 2 - 1,
+          length: Math.random() * 80 + 40,
+          opacity: 1,
+          life: Math.random() * 80 + 40,
+        });
+      }
+    };
+
+    // Create a rocket periodically
+    const createRocket = () => {
+      if (Math.random() < 0.01) {
+        rockets.push({
+          x: Math.random() * canvas.offsetWidth,
+          y: canvas.offsetHeight * 0.8,
+          vx: Math.random() * 0.5 + 0.3,
+          vy: -Math.random() * 1.5 - 1,
+          angle: Math.atan2(-Math.random() * 1.5 - 1, Math.random() * 0.5 + 0.3),
+          life: 300,
+          maxLife: 300,
+        });
+      }
+    };
 
     // 3D point structure
     interface Point3D {
@@ -64,30 +116,20 @@ export default function HeroSection() {
       z: number;
     }
 
-    // Generate hexagon vertices in 3D
-    const generateHexagon = (radius: number, depth: number): Point3D[] => {
+    // Generate sphere vertices for the sun
+    const generateSphere = (radius: number, segments: number): Point3D[] => {
       const points: Point3D[] = [];
-      
-      // Front face
-      for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI) / 3;
-        points.push({
-          x: radius * Math.cos(angle),
-          y: radius * Math.sin(angle),
-          z: depth,
-        });
+      for (let i = 0; i <= segments; i++) {
+        const phi = (i / segments) * Math.PI;
+        for (let j = 0; j <= segments; j++) {
+          const theta = (j / segments) * Math.PI * 2;
+          points.push({
+            x: radius * Math.sin(phi) * Math.cos(theta),
+            y: radius * Math.sin(phi) * Math.sin(theta),
+            z: radius * Math.cos(phi),
+          });
+        }
       }
-      
-      // Back face
-      for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI) / 3;
-        points.push({
-          x: radius * Math.cos(angle),
-          y: radius * Math.sin(angle),
-          z: -depth,
-        });
-      }
-      
       return points;
     };
 
@@ -132,123 +174,216 @@ export default function HeroSection() {
       };
     };
 
-    // Draw animated background
+    // Draw rocket
+    const drawRocket = (x: number, y: number, angle: number) => {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+
+      // Rocket body
+      ctx.fillStyle = "#FF6B35";
+      ctx.fillRect(0, -8, 20, 16);
+
+      // Rocket nose
+      ctx.fillStyle = "#FFD700";
+      ctx.beginPath();
+      ctx.moveTo(20, -8);
+      ctx.lineTo(28, 0);
+      ctx.lineTo(20, 8);
+      ctx.closePath();
+      ctx.fill();
+
+      // Rocket flame
+      ctx.fillStyle = "rgba(255, 100, 0, 0.8)";
+      ctx.beginPath();
+      ctx.moveTo(0, -6);
+      ctx.lineTo(-8, -10);
+      ctx.lineTo(-6, 0);
+      ctx.lineTo(-8, 10);
+      ctx.lineTo(0, 6);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = "rgba(255, 200, 0, 0.6)";
+      ctx.beginPath();
+      ctx.moveTo(0, -4);
+      ctx.lineTo(-4, -7);
+      ctx.lineTo(-3, 0);
+      ctx.lineTo(-4, 7);
+      ctx.lineTo(0, 4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.restore();
+    };
+
+    // Draw space background
     const drawBackground = () => {
       const width = canvas.offsetWidth;
       const height = canvas.offsetHeight;
 
-      // Base black background
-      ctx.fillStyle = "#000000";
-      ctx.fillRect(0, 0, width, height);
-
-      // Animated gradient overlay
-      const gradientAngle = time * 0.0005;
-      const gradX1 = width / 2 + Math.cos(gradientAngle) * width;
-      const gradY1 = height / 2 + Math.sin(gradientAngle) * height;
-      const gradX2 = width / 2 - Math.cos(gradientAngle) * width;
-      const gradY2 = height / 2 - Math.sin(gradientAngle) * height;
-
-      const bgGradient = ctx.createLinearGradient(gradX1, gradY1, gradX2, gradY2);
-      bgGradient.addColorStop(0, "rgba(0, 255, 0, 0.03)");
-      bgGradient.addColorStop(0.5, "rgba(0, 0, 0, 0)");
-      bgGradient.addColorStop(1, "rgba(0, 100, 255, 0.02)");
+      // Gradient background (dark grey to black)
+      const bgGradient = ctx.createLinearGradient(0, 0, 0, height);
+      bgGradient.addColorStop(0, "#2a2a3e");
+      bgGradient.addColorStop(0.3, "#1a1a2e");
+      bgGradient.addColorStop(1, "#0f0f1e");
       ctx.fillStyle = bgGradient;
       ctx.fillRect(0, 0, width, height);
 
-      // Draw animated grid lines
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.05)";
-      ctx.lineWidth = 0.5;
-      const gridSize = 80;
-      const offsetX = (time * 0.05) % gridSize;
-      const offsetY = (time * 0.03) % gridSize;
+      // Nebula effect
+      const nebula = ctx.createRadialGradient(width * 0.7, height * 0.3, 0, width * 0.7, height * 0.3, width * 0.6);
+      nebula.addColorStop(0, "rgba(255, 150, 0, 0.15)");
+      nebula.addColorStop(0.5, "rgba(255, 100, 0, 0.05)");
+      nebula.addColorStop(1, "rgba(255, 100, 0, 0)");
+      ctx.fillStyle = nebula;
+      ctx.fillRect(0, 0, width, height);
 
-      // Vertical lines
-      for (let x = -gridSize + offsetX; x < width; x += gridSize) {
+      // Draw static stars
+      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+      for (const star of particles) {
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, height);
-        ctx.stroke();
-      }
-
-      // Horizontal lines
-      for (let y = -gridSize + offsetY; y < height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
-        ctx.stroke();
-      }
-
-      // Draw animated circles/rings
-      for (let i = 0; i < 3; i++) {
-        const radius = 100 + i * 150 + Math.sin(time * 0.001 + i) * 50;
-        const opacity = 0.08 * (1 - (time % 3000) / 3000);
-        ctx.strokeStyle = `rgba(0, 255, 0, ${opacity})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(width / 2, height / 2, radius, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      // Draw particles
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        
-        // Update particle
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life--;
-        p.opacity = (p.life / 100) * (Math.random() * 0.5 + 0.2);
-
-        // Wrap around edges
-        if (p.x < 0) p.x = canvas.offsetWidth;
-        if (p.x > canvas.offsetWidth) p.x = 0;
-        if (p.y < 0) p.y = canvas.offsetHeight;
-        if (p.y > canvas.offsetHeight) p.y = 0;
-
-        // Draw particle
-        ctx.fillStyle = `rgba(0, 255, 0, ${p.opacity})`;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
         ctx.fill();
+      }
 
-        // Recreate dead particles
-        if (p.life <= 0) {
-          particles[i] = {
-            x: Math.random() * canvas.offsetWidth,
-            y: Math.random() * canvas.offsetHeight,
-            vx: (Math.random() - 0.5) * 0.5,
-            vy: (Math.random() - 0.5) * 0.5,
-            size: Math.random() * 2 + 0.5,
-            opacity: Math.random() * 0.5 + 0.2,
-            life: Math.random() * 100 + 50,
-          };
+      // Draw shooting stars
+      for (let i = shootingStars.length - 1; i >= 0; i--) {
+        const star = shootingStars[i];
+        
+        // Update shooting star
+        star.x += star.vx;
+        star.y += star.vy;
+        star.life--;
+        star.opacity = (star.life / 100) * 0.8;
+
+        // Draw shooting star trail
+        const gradient = ctx.createLinearGradient(
+          star.x - star.vx * 10,
+          star.y - star.vy * 10,
+          star.x,
+          star.y
+        );
+        gradient.addColorStop(0, `rgba(255, 255, 255, 0)`);
+        gradient.addColorStop(0.5, `rgba(255, 200, 100, ${star.opacity * 0.5})`);
+        gradient.addColorStop(1, `rgba(255, 255, 255, ${star.opacity})`);
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(star.x - star.vx * star.length, star.y - star.vy * star.length);
+        ctx.lineTo(star.x, star.y);
+        ctx.stroke();
+
+        // Remove dead shooting stars
+        if (star.life <= 0) {
+          shootingStars.splice(i, 1);
         }
       }
 
-      // Draw geometric patterns in corners
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.1)";
-      ctx.lineWidth = 1;
-      
-      // Top-left corner pattern
-      for (let i = 0; i < 5; i++) {
-        const offset = (time * 0.01 + i * 20) % 100;
+      // Draw rockets
+      for (let i = rockets.length - 1; i >= 0; i--) {
+        const rocket = rockets[i];
+        
+        // Update rocket
+        rocket.x += rocket.vx;
+        rocket.y += rocket.vy;
+        rocket.life--;
+
+        // Draw rocket
+        drawRocket(rocket.x, rocket.y, rocket.angle);
+
+        // Draw rocket glow
+        const glowGradient = ctx.createRadialGradient(rocket.x, rocket.y, 0, rocket.x, rocket.y, 40);
+        glowGradient.addColorStop(0, `rgba(255, 150, 0, ${0.3 * (rocket.life / rocket.maxLife)})`);
+        glowGradient.addColorStop(1, `rgba(255, 100, 0, 0)`);
+        ctx.fillStyle = glowGradient;
         ctx.beginPath();
-        ctx.moveTo(0, offset);
-        ctx.lineTo(offset, 0);
-        ctx.stroke();
+        ctx.arc(rocket.x, rocket.y, 40, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Remove dead rockets
+        if (rocket.life <= 0) {
+          rockets.splice(i, 1);
+        }
       }
 
-      // Bottom-right corner pattern
-      for (let i = 0; i < 5; i++) {
-        const offset = (time * 0.01 + i * 20) % 100;
-        ctx.beginPath();
-        ctx.moveTo(width - offset, height);
-        ctx.lineTo(width, height - offset);
-        ctx.stroke();
-      }
+      // Create new shooting stars and rockets
+      createShootingStar();
+      createRocket();
     };
 
-    // Draw 3D vault
+    // Draw 3D sun
+    const draw3DSun = () => {
+      const width = canvas.offsetWidth;
+      const height = canvas.offsetHeight;
+      const sunX = width * 0.75;
+      const sunY = height * 0.25;
+      const sunRadius = Math.min(width, height) * 0.15;
+      const perspective = 800;
+
+      // Generate sun sphere
+      let sunVertices = generateSphere(sunRadius, 16);
+      
+      // Apply rotations
+      sunVertices = sunVertices.map((v) => {
+        let p = rotateX(v, rotationX);
+        p = rotateY(p, rotationY);
+        p = rotateZ(p, rotationZ);
+        return p;
+      });
+
+      // Project to 2D
+      const projectedSun = sunVertices.map((v) => {
+        const p = project(v, perspective);
+        return {
+          x: sunX + p.x,
+          y: sunY + p.y,
+          z: p.z,
+        };
+      });
+
+      // Draw sun surface with gradient
+      const sunGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius * 1.2);
+      sunGradient.addColorStop(0, "rgba(255, 220, 0, 0.9)");
+      sunGradient.addColorStop(0.4, "rgba(255, 150, 0, 0.8)");
+      sunGradient.addColorStop(0.8, "rgba(255, 100, 0, 0.6)");
+      sunGradient.addColorStop(1, "rgba(255, 50, 0, 0)");
+
+      ctx.fillStyle = sunGradient;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, sunRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw sun core
+      const coreGradient = ctx.createRadialGradient(sunX, sunY, 0, sunX, sunY, sunRadius * 0.6);
+      coreGradient.addColorStop(0, "rgba(255, 255, 200, 0.8)");
+      coreGradient.addColorStop(1, "rgba(255, 200, 0, 0.4)");
+      ctx.fillStyle = coreGradient;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, sunRadius * 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Draw sun flares
+      for (let i = 0; i < 8; i++) {
+        const angle = (i / 8) * Math.PI * 2 + time * 0.002;
+        const flareX = sunX + Math.cos(angle) * sunRadius * 1.3;
+        const flareY = sunY + Math.sin(angle) * sunRadius * 1.3;
+        const flareGradient = ctx.createRadialGradient(flareX, flareY, 0, flareX, flareY, sunRadius * 0.3);
+        flareGradient.addColorStop(0, "rgba(255, 200, 0, 0.6)");
+        flareGradient.addColorStop(1, "rgba(255, 100, 0, 0)");
+        ctx.fillStyle = flareGradient;
+        ctx.beginPath();
+        ctx.arc(flareX, flareY, sunRadius * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Update rotations
+      rotationY += 0.005;
+      rotationX = 0.2 + Math.sin(rotationY * 0.5) * 0.15;
+      rotationZ += 0.002;
+    };
+
+    // Draw vault
     const draw3DVault = () => {
       const width = canvas.offsetWidth;
       const height = canvas.offsetHeight;
@@ -258,20 +393,36 @@ export default function HeroSection() {
       const depth = radius * 0.8;
       const perspective = 500;
 
-      // Draw glow background
-      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 3);
-      glowGradient.addColorStop(0, "rgba(0, 255, 0, 0.2)");
-      glowGradient.addColorStop(0.5, "rgba(0, 255, 0, 0.05)");
-      glowGradient.addColorStop(1, "rgba(0, 255, 0, 0)");
-      ctx.fillStyle = glowGradient;
-      ctx.beginPath();
-      ctx.arc(centerX, centerY, radius * 3, 0, Math.PI * 2);
-      ctx.fill();
+      // Generate hexagon
+      interface Point3D {
+        x: number;
+        y: number;
+        z: number;
+      }
 
-      // Generate and transform vertices
+      const generateHexagon = (radius: number, depth: number): Point3D[] => {
+        const points: Point3D[] = [];
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI) / 3;
+          points.push({
+            x: radius * Math.cos(angle),
+            y: radius * Math.sin(angle),
+            z: depth,
+          });
+        }
+        for (let i = 0; i < 6; i++) {
+          const angle = (i * Math.PI) / 3;
+          points.push({
+            x: radius * Math.cos(angle),
+            y: radius * Math.sin(angle),
+            z: -depth,
+          });
+        }
+        return points;
+      };
+
       let vertices = generateHexagon(radius, depth);
       
-      // Apply rotations
       vertices = vertices.map((v) => {
         let p = rotateX(v, rotationX);
         p = rotateY(p, rotationY);
@@ -279,7 +430,6 @@ export default function HeroSection() {
         return p;
       });
 
-      // Project to 2D
       const projected = vertices.map((v) => {
         const p = project(v, perspective);
         return {
@@ -289,8 +439,8 @@ export default function HeroSection() {
         };
       });
 
-      // Draw back face (darker)
-      ctx.strokeStyle = "rgba(0, 200, 0, 0.3)";
+      // Draw vault with warm colors (orange/yellow instead of green)
+      ctx.strokeStyle = "rgba(255, 150, 0, 0.3)";
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
@@ -301,16 +451,12 @@ export default function HeroSection() {
       ctx.closePath();
       ctx.stroke();
 
-      // Draw connecting edges with gradient
       for (let i = 0; i < 6; i++) {
         const front = projected[i];
         const back = projected[i + 6];
-        
-        // Create gradient for depth effect
         const gradient = ctx.createLinearGradient(front.x, front.y, back.x, back.y);
-        gradient.addColorStop(0, "rgba(0, 255, 0, 0.8)");
-        gradient.addColorStop(1, "rgba(0, 150, 0, 0.3)");
-        
+        gradient.addColorStop(0, "rgba(255, 200, 0, 0.8)");
+        gradient.addColorStop(1, "rgba(255, 100, 0, 0.3)");
         ctx.strokeStyle = gradient;
         ctx.lineWidth = 2;
         ctx.beginPath();
@@ -319,10 +465,9 @@ export default function HeroSection() {
         ctx.stroke();
       }
 
-      // Draw front face (brighter with glow)
-      ctx.shadowColor = "rgba(0, 255, 0, 0.8)";
+      ctx.shadowColor = "rgba(255, 150, 0, 0.8)";
       ctx.shadowBlur = 20;
-      ctx.strokeStyle = "rgba(0, 255, 0, 1)";
+      ctx.strokeStyle = "rgba(255, 200, 0, 1)";
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
@@ -333,7 +478,6 @@ export default function HeroSection() {
       ctx.closePath();
       ctx.stroke();
 
-      // Draw inner hexagon for depth
       const innerRadius = radius * 0.6;
       let innerVertices = generateHexagon(innerRadius, depth * 0.5);
       innerVertices = innerVertices.map((v) => {
@@ -353,7 +497,7 @@ export default function HeroSection() {
       });
 
       ctx.shadowBlur = 0;
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.5)";
+      ctx.strokeStyle = "rgba(255, 150, 0, 0.5)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
@@ -364,10 +508,7 @@ export default function HeroSection() {
       ctx.closePath();
       ctx.stroke();
 
-      // Draw keyhole in center with 3D effect
       const keyholeFront = project({ x: 0, y: 0, z: depth }, perspective);
-
-      // Keyhole glow
       const keyholeGlow = ctx.createRadialGradient(
         centerX + keyholeFront.x,
         centerY + keyholeFront.y,
@@ -376,32 +517,27 @@ export default function HeroSection() {
         centerY + keyholeFront.y,
         radius * 0.25
       );
-      keyholeGlow.addColorStop(0, "rgba(0, 255, 0, 0.9)");
-      keyholeGlow.addColorStop(0.7, "rgba(0, 255, 0, 0.4)");
-      keyholeGlow.addColorStop(1, "rgba(0, 255, 0, 0)");
+      keyholeGlow.addColorStop(0, "rgba(255, 200, 0, 0.9)");
+      keyholeGlow.addColorStop(0.7, "rgba(255, 150, 0, 0.4)");
+      keyholeGlow.addColorStop(1, "rgba(255, 100, 0, 0)");
 
       ctx.fillStyle = keyholeGlow;
-      ctx.shadowColor = "rgba(0, 255, 0, 1)";
+      ctx.shadowColor = "rgba(255, 150, 0, 1)";
       ctx.shadowBlur = 25;
       ctx.beginPath();
       ctx.arc(centerX + keyholeFront.x, centerY + keyholeFront.y, radius * 0.15, 0, Math.PI * 2);
       ctx.fill();
 
-      // Inner keyhole (black)
-      ctx.fillStyle = "#000000";
+      ctx.fillStyle = "#0f0f1e";
       ctx.shadowBlur = 0;
       ctx.beginPath();
       ctx.arc(centerX + keyholeFront.x, centerY + keyholeFront.y, radius * 0.08, 0, Math.PI * 2);
       ctx.fill();
-
-      // Update rotations for smooth animation
-      rotationY += 0.01;
-      rotationX = 0.3 + Math.sin(rotationY * 0.5) * 0.2;
-      rotationZ += 0.003;
     };
 
     const animate = () => {
       drawBackground();
+      draw3DSun();
       draw3DVault();
       time++;
       animationId = requestAnimationFrame(animate);
@@ -424,7 +560,7 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden pt-20">
-      {/* Animated Canvas with Background + 3D Vault */}
+      {/* Animated Canvas with Space Background + 3D Sun + 3D Vault */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       {/* Content Overlay */}
