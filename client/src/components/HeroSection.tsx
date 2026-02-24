@@ -17,85 +17,251 @@ export default function HeroSection() {
     ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
 
     let animationId: number;
-    let rotation = 0;
+    let rotationX = 0.3;
+    let rotationY = 0;
+    let rotationZ = 0;
 
-    const drawVault = () => {
+    // 3D point structure
+    interface Point3D {
+      x: number;
+      y: number;
+      z: number;
+    }
+
+    interface Point2D {
+      x: number;
+      y: number;
+      z: number;
+    }
+
+    // Generate hexagon vertices in 3D
+    const generateHexagon = (radius: number, depth: number): Point3D[] => {
+      const points: Point3D[] = [];
+      
+      // Front face
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        points.push({
+          x: radius * Math.cos(angle),
+          y: radius * Math.sin(angle),
+          z: depth,
+        });
+      }
+      
+      // Back face
+      for (let i = 0; i < 6; i++) {
+        const angle = (i * Math.PI) / 3;
+        points.push({
+          x: radius * Math.cos(angle),
+          y: radius * Math.sin(angle),
+          z: -depth,
+        });
+      }
+      
+      return points;
+    };
+
+    // Rotation matrices
+    const rotateX = (point: Point3D, angle: number): Point3D => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return {
+        x: point.x,
+        y: point.y * cos - point.z * sin,
+        z: point.y * sin + point.z * cos,
+      };
+    };
+
+    const rotateY = (point: Point3D, angle: number): Point3D => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return {
+        x: point.x * cos + point.z * sin,
+        y: point.y,
+        z: -point.x * sin + point.z * cos,
+      };
+    };
+
+    const rotateZ = (point: Point3D, angle: number): Point3D => {
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      return {
+        x: point.x * cos - point.y * sin,
+        y: point.x * sin + point.y * cos,
+        z: point.z,
+      };
+    };
+
+    // Project 3D point to 2D
+    const project = (point: Point3D, perspective: number): Point2D => {
+      const scale = perspective / (perspective + point.z);
+      return {
+        x: point.x * scale,
+        y: point.y * scale,
+        z: point.z,
+      };
+    };
+
+    // Draw 3D vault
+    const draw3DVault = () => {
       const width = canvas.offsetWidth;
       const height = canvas.offsetHeight;
       const centerX = width / 2;
       const centerY = height / 2;
-      const size = Math.min(width, height) * 0.15;
+      const radius = Math.min(width, height) * 0.12;
+      const depth = radius * 0.8;
+      const perspective = 500;
 
-      // Clear canvas with black background
+      // Clear canvas
       ctx.fillStyle = "#000000";
       ctx.fillRect(0, 0, width, height);
 
-      // Draw glow effect
-      const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size * 2);
-      gradient.addColorStop(0, "rgba(0, 255, 0, 0.15)");
-      gradient.addColorStop(1, "rgba(0, 255, 0, 0)");
-      ctx.fillStyle = gradient;
+      // Draw glow background
+      const glowGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius * 3);
+      glowGradient.addColorStop(0, "rgba(0, 255, 0, 0.2)");
+      glowGradient.addColorStop(0.5, "rgba(0, 255, 0, 0.05)");
+      glowGradient.addColorStop(1, "rgba(0, 255, 0, 0)");
+      ctx.fillStyle = glowGradient;
       ctx.beginPath();
-      ctx.arc(centerX, centerY, size * 2, 0, Math.PI * 2);
+      ctx.arc(centerX, centerY, radius * 3, 0, Math.PI * 2);
       ctx.fill();
 
-      // Draw animated vault
-      ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotation);
+      // Generate and transform vertices
+      let vertices = generateHexagon(radius, depth);
+      
+      // Apply rotations
+      vertices = vertices.map((v) => {
+        let p = rotateX(v, rotationX);
+        p = rotateY(p, rotationY);
+        p = rotateZ(p, rotationZ);
+        return p;
+      });
 
-      // Outer hexagon with glow
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.8)";
-      ctx.lineWidth = 2;
-      ctx.shadowColor = "rgba(0, 255, 0, 0.6)";
-      ctx.shadowBlur = 15;
+      // Project to 2D
+      const projected = vertices.map((v) => {
+        const p = project(v, perspective);
+        return {
+          x: centerX + p.x,
+          y: centerY + p.y,
+          z: p.z,
+        };
+      });
+
+      // Draw back face (darker)
+      ctx.strokeStyle = "rgba(0, 200, 0, 0.3)";
+      ctx.lineWidth = 1.5;
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI) / 3;
-        const x = size * Math.cos(angle);
-        const y = size * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        const p = projected[i + 6];
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
       }
       ctx.closePath();
       ctx.stroke();
 
-      // Inner hexagon
-      ctx.strokeStyle = "rgba(0, 255, 0, 0.4)";
-      ctx.lineWidth = 1;
-      ctx.shadowBlur = 0;
-      ctx.beginPath();
+      // Draw connecting edges with gradient
       for (let i = 0; i < 6; i++) {
-        const angle = (i * Math.PI) / 3;
-        const x = (size * 0.6) * Math.cos(angle);
-        const y = (size * 0.6) * Math.sin(angle);
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        const front = projected[i];
+        const back = projected[i + 6];
+        
+        // Create gradient for depth effect
+        const gradient = ctx.createLinearGradient(front.x, front.y, back.x, back.y);
+        gradient.addColorStop(0, "rgba(0, 255, 0, 0.8)");
+        gradient.addColorStop(1, "rgba(0, 150, 0, 0.3)");
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(front.x, front.y);
+        ctx.lineTo(back.x, back.y);
+        ctx.stroke();
       }
-      ctx.closePath();
-      ctx.stroke();
 
-      // Center keyhole with glow
-      ctx.fillStyle = "rgba(0, 255, 0, 0.9)";
+      // Draw front face (brighter with glow)
       ctx.shadowColor = "rgba(0, 255, 0, 0.8)";
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = 20;
+      ctx.strokeStyle = "rgba(0, 255, 0, 1)";
+      ctx.lineWidth = 2.5;
       ctx.beginPath();
-      ctx.arc(0, 0, size * 0.12, 0, Math.PI * 2);
+      for (let i = 0; i < 6; i++) {
+        const p = projected[i];
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      // Draw inner hexagon for depth
+      const innerRadius = radius * 0.6;
+      let innerVertices = generateHexagon(innerRadius, depth * 0.5);
+      innerVertices = innerVertices.map((v) => {
+        let p = rotateX(v, rotationX);
+        p = rotateY(p, rotationY);
+        p = rotateZ(p, rotationZ);
+        return p;
+      });
+
+      const projectedInner = innerVertices.map((v) => {
+        const p = project(v, perspective);
+        return {
+          x: centerX + p.x,
+          y: centerY + p.y,
+          z: p.z,
+        };
+      });
+
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = "rgba(0, 255, 0, 0.5)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const p = projectedInner[i];
+        if (i === 0) ctx.moveTo(p.x, p.y);
+        else ctx.lineTo(p.x, p.y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+
+      // Draw keyhole in center with 3D effect
+      const keyholeFront = project({ x: 0, y: 0, z: depth }, perspective);
+      const keyholeBack = project({ x: 0, y: 0, z: -depth }, perspective);
+
+      // Keyhole glow
+      const keyholeGlow = ctx.createRadialGradient(
+        centerX + keyholeFront.x,
+        centerY + keyholeFront.y,
+        0,
+        centerX + keyholeFront.x,
+        centerY + keyholeFront.y,
+        radius * 0.25
+      );
+      keyholeGlow.addColorStop(0, "rgba(0, 255, 0, 0.9)");
+      keyholeGlow.addColorStop(0.7, "rgba(0, 255, 0, 0.4)");
+      keyholeGlow.addColorStop(1, "rgba(0, 255, 0, 0)");
+
+      ctx.fillStyle = keyholeGlow;
+      ctx.shadowColor = "rgba(0, 255, 0, 1)";
+      ctx.shadowBlur = 25;
+      ctx.beginPath();
+      ctx.arc(centerX + keyholeFront.x, centerY + keyholeFront.y, radius * 0.15, 0, Math.PI * 2);
       ctx.fill();
 
+      // Inner keyhole (black)
       ctx.fillStyle = "#000000";
       ctx.shadowBlur = 0;
       ctx.beginPath();
-      ctx.arc(0, 0, size * 0.06, 0, Math.PI * 2);
+      ctx.arc(centerX + keyholeFront.x, centerY + keyholeFront.y, radius * 0.08, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.restore();
+      // Update rotations for smooth animation
+      rotationY += 0.01;
+      rotationX = 0.3 + Math.sin(rotationY * 0.5) * 0.2;
+      rotationZ += 0.003;
 
-      rotation += 0.008;
-      animationId = requestAnimationFrame(drawVault);
+      animationId = requestAnimationFrame(draw3DVault);
     };
 
-    drawVault();
+    draw3DVault();
 
     const handleResize = () => {
       canvas.width = canvas.offsetWidth * window.devicePixelRatio;
@@ -112,7 +278,7 @@ export default function HeroSection() {
 
   return (
     <section className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden pt-20">
-      {/* Animated Vault Canvas */}
+      {/* Animated 3D Vault Canvas */}
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       {/* Content Overlay */}
