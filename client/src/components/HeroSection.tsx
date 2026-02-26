@@ -19,9 +19,9 @@ export default function HeroSection() {
         height: '800px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(100, 100, 100, 0.25) 0%, rgba(250, 250, 248, 0) 70%)',
+          : 'radial-gradient(rgba(80, 80, 80, 0.4) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.6 : 0.5,
+        opacity: isDark ? 0.6 : 0.8,
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full animate-float-glow-2" style={{
@@ -29,9 +29,9 @@ export default function HeroSection() {
         height: '600px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(100, 100, 100, 0.25) 0%, rgba(250, 250, 248, 0) 70%)',
+          : 'radial-gradient(rgba(80, 80, 80, 0.4) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.6 : 0.5,
+        opacity: isDark ? 0.6 : 0.8,
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full animate-float-glow-3" style={{
@@ -39,9 +39,9 @@ export default function HeroSection() {
         height: '700px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(80, 80, 80, 0.2) 0%, rgba(250, 250, 248, 0) 70%)',
+          : 'radial-gradient(rgba(80, 80, 80, 0.35) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.5 : 0.4,
+        opacity: isDark ? 0.5 : 0.75,
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full animate-float-glow-4" style={{
@@ -49,9 +49,9 @@ export default function HeroSection() {
         height: '600px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(80, 80, 80, 0.15) 0%, rgba(250, 250, 248, 0) 70%)',
+          : 'radial-gradient(rgba(80, 80, 80, 0.3) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.4 : 0.35,
+        opacity: isDark ? 0.4 : 0.7,
         pointerEvents: 'none'
       }}></div>
 
