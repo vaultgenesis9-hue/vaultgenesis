@@ -10,9 +10,7 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-black/10"></div>
       
       {/* Radial gradient glow effects - extending into navbar */}
-      <div className="absolute rounded-full" style={{
-        top: '-300px',
-        left: '-100px',
+      <div className="absolute rounded-full animate-float-glow-1" style={{
         width: '600px',
         height: '800px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)',
@@ -20,9 +18,7 @@ export default function HeroSection() {
         opacity: 0.6,
         pointerEvents: 'none'
       }}></div>
-      <div className="absolute rounded-full" style={{
-        top: '-150px',
-        left: '200px',
+      <div className="absolute rounded-full animate-float-glow-2" style={{
         width: '400px',
         height: '600px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)',
@@ -30,9 +26,7 @@ export default function HeroSection() {
         opacity: 0.6,
         pointerEvents: 'none'
       }}></div>
-      <div className="absolute rounded-full" style={{
-        top: '-100px',
-        right: '100px',
+      <div className="absolute rounded-full animate-float-glow-3" style={{
         width: '500px',
         height: '700px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
@@ -40,9 +34,7 @@ export default function HeroSection() {
         opacity: 0.5,
         pointerEvents: 'none'
       }}></div>
-      <div className="absolute rounded-full" style={{
-        top: '100px',
-        right: '200px',
+      <div className="absolute rounded-full animate-float-glow-4" style={{
         width: '450px',
         height: '600px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%)',
