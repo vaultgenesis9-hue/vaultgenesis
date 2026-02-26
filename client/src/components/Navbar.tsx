@@ -22,7 +22,8 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-black relative" style={{
-      background: 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)'
+      background: 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)',
+      boxShadow: 'inset 0 -20px 40px -20px rgba(0, 0, 0, 0.5)'
     }}>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
@@ -49,7 +50,9 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
       {/* Mobile Menu - Slides Down */}
       {mobileMenuOpen && (
-        <div className="bg-black animate-in fade-in slide-in-from-top-2">
+        <div className="animate-in fade-in slide-in-from-top-2" style={{
+          background: 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)'
+        }}>
           <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
             {navLinks.map((link) => (
               <button
