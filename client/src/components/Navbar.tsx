@@ -21,7 +21,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
   const [, navigate] = useLocation();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-sm border-b border-white/10">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10">
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
         <button
@@ -31,24 +31,24 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
           <img src={LOGO_URL} alt="VaultGenesis" className="h-8 w-auto" />
         </button>
 
-        {/* Connect Wallet Button - Desktop */}
-        <button className="hidden md:block px-6 py-2 bg-white text-black font-bold rounded hover:bg-gray-200 transition uppercase text-sm">
-          CONNECT WALLET
-        </button>
-
-        {/* Hamburger Menu */}
-        <button
-          className="md:hidden text-white p-2"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Hamburger Menu Icon - Always Visible */}
+        <div className="flex items-center gap-4">
+          <button className="px-6 py-2 bg-white text-black font-bold rounded hover:bg-gray-200 transition uppercase text-sm">
+            CONNECT WALLET
+          </button>
+          <button
+            className="text-white p-2 hover:bg-white/10 rounded transition"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu - Slides Down */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-black border-t border-white/10">
-          <div className="container mx-auto px-4 py-4 flex flex-col gap-4">
+        <div className="bg-black border-t border-white/10 animate-in fade-in slide-in-from-top-2">
+          <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
             {navLinks.map((link) => (
               <button
                 key={link.href}
@@ -56,14 +56,11 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
                   navigate(link.href);
                   setMobileMenuOpen(false);
                 }}
-                className="text-white text-left font-bold hover:text-gray-300 transition uppercase text-sm"
+                className="text-white text-left font-bold hover:text-gray-300 transition uppercase text-sm py-2"
               >
                 {link.label}
               </button>
             ))}
-            <button className="w-full px-6 py-2 bg-white text-black font-bold rounded hover:bg-gray-200 transition uppercase text-sm mt-4">
-              CONNECT WALLET
-            </button>
           </div>
         </div>
       )}

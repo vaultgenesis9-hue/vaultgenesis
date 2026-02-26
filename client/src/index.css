@@ -189,7 +189,7 @@
   }
 
   button, a, [role="button"] {
-    @apply transition-all duration-200 ease-out;
+    @apply transition-all duration-200 ease-out rounded-lg;
   }
 
   input, textarea, select {

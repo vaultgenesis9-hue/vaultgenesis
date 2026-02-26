@@ -1,96 +1,91 @@
-import { useEffect, useRef } from "react";
-import RealisticSun from "./RealisticSun";
-
 export default function HeroSection() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Set canvas size
-    const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-
-    // Animation loop
-    let animationId: number;
-    const animate = () => {
-      // Draw pure black to grey gradient background
-      const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-      gradient.addColorStop(0, "#0a0a0a");
-      gradient.addColorStop(0.5, "#1a1a1a");
-      gradient.addColorStop(1, "#000000");
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw stars
-      ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
-      for (let i = 0; i < 100; i++) {
-        const x = (i * 73.5) % canvas.width;
-        const y = (i * 41.7) % canvas.height;
-        const size = Math.sin(i * 0.1) * 0.5 + 0.5;
-        ctx.fillRect(x, y, size, size);
-      }
-
-      animationId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener("resize", resizeCanvas);
-      cancelAnimationFrame(animationId);
-    };
-  }, []);
-
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden">
-      {/* Background Canvas */}
-      <canvas
-        ref={canvasRef}
-        className="absolute inset-0 w-full h-full"
-      />
+    <div className="relative w-full min-h-screen bg-black overflow-hidden">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-gray-900 via-black to-black opacity-90"></div>
 
-      {/* 3D Sun and Rocket */}
-      <div className="absolute bottom-0 right-0 w-96 h-96 z-10">
-        <RealisticSun />
+      {/* Rotating sun video - positioned at bottom center like MoonLaunch */}
+      <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-96 h-96 opacity-90 pointer-events-none">
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          className="w-full h-full object-cover"
+          style={{
+            filter: 'drop-shadow(0 0 80px rgba(255, 200, 0, 0.3))',
+            mixBlendMode: 'screen',
+          }}
+        >
+          <source src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663061635487/vHGxKBgfCZhFIWIH.mp4" type="video/mp4" />
+        </video>
+      </div>
+
+      {/* Stars background */}
+      <div className="absolute inset-0 pointer-events-none">
+        {[...Array(100)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute bg-white rounded-full opacity-60"
+            style={{
+              width: Math.random() * 2 + 'px',
+              height: Math.random() * 2 + 'px',
+              left: Math.random() * 100 + '%',
+              top: Math.random() * 100 + '%',
+              animation: `twinkle ${Math.random() * 3 + 2}s infinite`,
+            }}
+          />
+        ))}
       </div>
 
       {/* Content */}
-      <div className="relative z-20 h-full flex flex-col items-center justify-center text-center px-4">
-        {/* Main Title */}
-        <h1 className="text-7xl md:text-8xl font-black text-white mb-6 tracking-tight">
-          VAULT<br />GENESIS
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
+        {/* Main heading */}
+        <h1 className="text-7xl md:text-8xl font-black text-white mb-6 tracking-tight leading-none">
+          VAULT
+          <br />
+          GENESIS
         </h1>
 
         {/* Subtitle */}
-        <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl">
+        <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl font-light">
           Launch your meme coin, stake tokens, and trade with AI-powered bots
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <button className="px-8 py-3 bg-white text-black font-bold rounded hover:bg-gray-200 transition uppercase text-sm">
+        <div className="flex flex-col sm:flex-row gap-4 mb-16">
+          <button className="px-8 py-3 bg-white text-black font-bold text-lg rounded-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">
             CREATE TOKEN
           </button>
-          <button className="px-8 py-3 bg-transparent border-2 border-white text-white font-bold rounded hover:bg-white/10 transition uppercase text-sm">
+          <button className="px-8 py-3 border-2 border-white text-white font-bold text-lg rounded-lg hover:bg-white hover:text-black transition-all duration-300 transform hover:scale-105">
             CONNECT WALLET
           </button>
         </div>
 
         {/* Stats */}
-        <div className="mt-16 text-gray-400 text-sm space-y-2">
-          <p>TOKENS LAUNCHED: 314+</p>
-          <p>TOTAL VOLUME: $2.4M+</p>
+        <div className="flex flex-col sm:flex-row gap-8 text-gray-400 text-sm">
+          <div>
+            <p className="text-white font-bold">314+</p>
+            <p>TOKENS LAUNCHED</p>
+          </div>
+          <div>
+            <p className="text-white font-bold">$2.4M+</p>
+            <p>TOTAL VOLUME</p>
+          </div>
+          <div>
+            <p className="text-white font-bold">1,200+</p>
+            <p>ACTIVE USERS</p>
+          </div>
         </div>
       </div>
+
+      {/* Twinkle animation */}
+      <style>{`
+        @keyframes twinkle {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
