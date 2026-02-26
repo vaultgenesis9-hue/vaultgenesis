@@ -6,9 +6,9 @@ export default function HeroSection() {
       {/* Gradient overlay for depth */}
       <div className="absolute inset-0 bg-black/10"></div>
       
-      {/* Radial gradient glow effects - exact MoonLaunch positioning */}
+      {/* Radial gradient glow effects - extending into navbar */}
       <div className="absolute rounded-full" style={{
-        top: '-500px',
+        top: '-300px',
         left: '-100px',
         width: '600px',
         height: '800px',
@@ -18,7 +18,7 @@ export default function HeroSection() {
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full" style={{
-        top: '-300px',
+        top: '-150px',
         left: '200px',
         width: '400px',
         height: '600px',
@@ -28,7 +28,7 @@ export default function HeroSection() {
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full" style={{
-        top: '-250px',
+        top: '-100px',
         right: '100px',
         width: '500px',
         height: '700px',
@@ -38,7 +38,7 @@ export default function HeroSection() {
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full" style={{
-        top: '50px',
+        top: '100px',
         right: '200px',
         width: '450px',
         height: '600px',
@@ -47,8 +47,6 @@ export default function HeroSection() {
         opacity: 0.4,
         pointerEvents: 'none'
       }}></div>
-
-
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-4 text-center">
@@ -60,38 +58,36 @@ export default function HeroSection() {
         </h1>
 
         {/* Subtitle */}
-        <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl font-light">
+        <p className="text-lg md:text-xl text-gray-300 mb-12 max-w-2xl">
           Launch your meme coin, stake tokens, and trade with AI-powered bots
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-16">
-          <button className="px-8 py-3 bg-white text-black font-bold text-base hover:bg-gray-100 transition-all duration-300">
+        <div className="flex flex-col sm:flex-row gap-4 mb-20">
+          <button className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-sm">
             CREATE TOKEN
           </button>
-          <button className="px-8 py-3 bg-white text-black font-bold text-base hover:bg-gray-100 transition-all duration-300">
+          <button className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-sm">
             CONNECT WALLET
           </button>
         </div>
 
         {/* Stats */}
-        <div className="flex flex-col sm:flex-row gap-8 text-gray-400 text-sm">
+        <div className="flex flex-col sm:flex-row gap-12 text-center">
           <div>
-            <p className="text-white font-bold">314+</p>
-            <p>TOKENS LAUNCHED</p>
+            <p className="text-2xl md:text-3xl font-bold text-white">314+</p>
+            <p className="text-gray-400 text-sm uppercase tracking-wider">Tokens Launched</p>
           </div>
           <div>
-            <p className="text-white font-bold">$2.4M+</p>
-            <p>TOTAL VOLUME</p>
+            <p className="text-2xl md:text-3xl font-bold text-white">$2.4M+</p>
+            <p className="text-gray-400 text-sm uppercase tracking-wider">Total Volume</p>
           </div>
           <div>
-            <p className="text-white font-bold">1,200+</p>
-            <p>ACTIVE USERS</p>
+            <p className="text-2xl md:text-3xl font-bold text-white">1,200+</p>
+            <p className="text-gray-400 text-sm uppercase tracking-wider">Active Users</p>
           </div>
         </div>
       </div>
-
-
     </div>
   );
 }
