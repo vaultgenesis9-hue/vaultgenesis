@@ -53,7 +53,7 @@ export default function PartnersCarousel() {
       </div>
 
       {/* Carousel Container */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden flex justify-center">
         {/* Gradient overlays for fade effect */}
         <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
         <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
@@ -61,19 +61,19 @@ export default function PartnersCarousel() {
         {/* Scrolling carousel */}
         <div
           id="carousel-scroll"
-          className="flex gap-16 overflow-x-hidden scroll-smooth px-8"
+          className="flex gap-12 overflow-x-hidden scroll-smooth px-8 w-full max-w-4xl"
           style={{ scrollBehavior: 'smooth' }}
         >
           {/* Duplicate logos for infinite loop effect */}
           {[...partners, ...partners, ...partners].map((partner, index) => (
             <div
               key={`${partner.name}-${index}`}
-              className="flex-shrink-0 h-20 flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="flex-shrink-0 h-16 flex items-center justify-center hover:opacity-80 transition-opacity"
             >
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className="h-16 w-auto object-contain filter brightness-0 invert"
+                className="h-10 w-auto object-contain filter brightness-0 invert"
               />
             </div>
           ))}
