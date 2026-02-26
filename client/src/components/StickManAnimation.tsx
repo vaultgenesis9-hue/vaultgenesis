@@ -14,16 +14,17 @@ export default function StickManAnimation() {
     let time = 0;
 
     const drawStickMan = (x: number, y: number, carryingBox: boolean) => {
-      const scale = 1.5;
-      const headRadius = 15 * scale;
-      const bodyHeight = 40 * scale;
-      const limbLength = 30 * scale;
+      const scale = 1.2;
+      const headRadius = 12 * scale;
+      const bodyHeight = 35 * scale;
+      const limbLength = 25 * scale;
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
 
       // Head
       ctx.beginPath();
       ctx.arc(x, y - headRadius, headRadius, 0, Math.PI * 2);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
       ctx.stroke();
 
       // Body
@@ -64,59 +65,53 @@ export default function StickManAnimation() {
       ctx.lineTo(rightLegX, rightLegY);
       ctx.stroke();
 
-      // Draw treasure box if carrying
+      // Draw treasure box if carrying (white outline only)
       if (carryingBox) {
-        const boxX = rightArmX - 15;
-        const boxY = rightArmY - 20;
-        const boxWidth = 30;
-        const boxHeight = 25;
+        const boxX = rightArmX - 12;
+        const boxY = rightArmY - 18;
+        const boxWidth = 24;
+        const boxHeight = 20;
 
-        // Box
-        ctx.fillStyle = '#FFD700';
-        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-        ctx.strokeStyle = '#FFA500';
+        ctx.strokeStyle = '#ffffff';
         ctx.lineWidth = 2;
         ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
 
-        // Treasure details
-        ctx.fillStyle = '#FFA500';
-        ctx.fillRect(boxX + 5, boxY + 5, 8, 8);
-        ctx.fillRect(boxX + 17, boxY + 5, 8, 8);
-        ctx.fillRect(boxX + 5, boxY + 15, 8, 8);
-        ctx.fillRect(boxX + 17, boxY + 15, 8, 8);
+        // Simple X pattern inside box
+        ctx.beginPath();
+        ctx.moveTo(boxX + 2, boxY + 2);
+        ctx.lineTo(boxX + boxWidth - 2, boxY + boxHeight - 2);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(boxX + boxWidth - 2, boxY + 2);
+        ctx.lineTo(boxX + 2, boxY + boxHeight - 2);
+        ctx.stroke();
       }
     };
 
     const drawVault = (x: number, y: number) => {
-      const vaultWidth = 60;
-      const vaultHeight = 70;
+      const vaultWidth = 50;
+      const vaultHeight = 60;
+
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2.5;
 
       // Vault body
-      ctx.fillStyle = '#808080';
-      ctx.fillRect(x - vaultWidth / 2, y - vaultHeight / 2, vaultWidth, vaultHeight);
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 3;
       ctx.strokeRect(x - vaultWidth / 2, y - vaultHeight / 2, vaultWidth, vaultHeight);
 
-      // Vault door
-      ctx.fillStyle = '#404040';
+      // Vault door circle
       ctx.beginPath();
-      ctx.arc(x, y, 20, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = 2;
+      ctx.arc(x, y, 15, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Vault lock
-      ctx.fillStyle = '#FFD700';
+      // Vault lock (small circle in center)
       ctx.beginPath();
-      ctx.arc(x, y, 8, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.arc(x, y, 5, 0, Math.PI * 2);
+      ctx.stroke();
     };
 
     const animate = () => {
       // Clear canvas
-      ctx.fillStyle = 'rgba(0, 0, 0, 0)';
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       const cycleTime = 200; // Animation cycle in frames
@@ -125,33 +120,31 @@ export default function StickManAnimation() {
       // Phase 1: Walk to treasure (0-50 frames)
       if (normalizedTime < 50) {
         const progress = normalizedTime / 50;
-        const stickManX = 100 + progress * 150;
-        drawStickMan(stickManX, 200, false);
+        const stickManX = 80 + progress * 140;
+        drawStickMan(stickManX, 160, false);
       }
       // Phase 2: Pick up treasure and walk back (50-150 frames)
       else if (normalizedTime < 150) {
         const progress = (normalizedTime - 50) / 100;
-        const stickManX = 250 - progress * 150;
-        drawStickMan(stickManX, 200, true);
+        const stickManX = 220 - progress * 140;
+        drawStickMan(stickManX, 160, true);
       }
-      // Phase 3: Load into vault (150-200 frames)
+      // Phase 3: Back at vault (150-200 frames)
       else {
-        drawStickMan(100, 200, false);
+        drawStickMan(80, 160, false);
       }
 
       // Draw vault
-      drawVault(80, 200);
+      drawVault(70, 160);
 
       // Draw treasure pile (starting position)
-      ctx.fillStyle = '#FFD700';
-      ctx.beginPath();
-      ctx.moveTo(270, 220);
-      ctx.lineTo(290, 220);
-      ctx.lineTo(280, 200);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = '#FFA500';
+      ctx.strokeStyle = '#ffffff';
       ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(230, 175);
+      ctx.lineTo(250, 175);
+      ctx.lineTo(240, 155);
+      ctx.closePath();
       ctx.stroke();
 
       time++;
@@ -170,7 +163,7 @@ export default function StickManAnimation() {
           ref={canvasRef}
           width={350}
           height={220}
-          className="border border-white/10 rounded-lg bg-black/30"
+          className="border border-white/10 bg-black/30"
         />
         <p className="text-gray-500 text-xs uppercase tracking-wider">Secure Treasury System</p>
       </div>
