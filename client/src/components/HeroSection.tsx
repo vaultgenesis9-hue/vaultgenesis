@@ -1,4 +1,4 @@
-import StickManAnimation from './StickManAnimation';
+import PartnersCarousel from './PartnersCarousel';
 
 export default function HeroSection() {
   return (
@@ -90,8 +90,8 @@ export default function HeroSection() {
           </div>
         </div>
 
-        {/* Stick Man Animation */}
-        <StickManAnimation />
+        {/* Partners Carousel */}
+        <PartnersCarousel />
       </div>
     </div>
   );
