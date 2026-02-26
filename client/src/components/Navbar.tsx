@@ -33,7 +33,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
         {/* Hamburger Menu Icon - Always Visible */}
         <div className="flex items-center gap-4">
-          <button className="px-6 py-2 bg-white text-black font-bold rounded hover:bg-gray-200 transition uppercase text-sm">
+          <button className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 transition uppercase text-sm">
             CONNECT WALLET
           </button>
           <button
