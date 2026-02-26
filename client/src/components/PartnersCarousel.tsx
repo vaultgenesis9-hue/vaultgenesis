@@ -1,120 +1,143 @@
 import { useEffect, useState } from 'react';
 
+// Partner logos as SVG components
 const partners = [
   {
     name: 'Coinbase',
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z" fill="white"/>
+      <svg viewBox="0 0 200 200" className="w-16 h-16 fill-white">
+        <circle cx="100" cy="100" r="95" fill="none" stroke="white" strokeWidth="2"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="60" fontWeight="bold" fill="white">₿</text>
       </svg>
     ),
   },
   {
     name: 'Kraken',
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
-        <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="2"/>
-        <path d="M12 7v10M7 12h10" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">K</text>
       </svg>
     ),
   },
   {
     name: 'Binance',
     logo: (
-      <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
-        <path d="M12 2L2 8v8l10 6 10-6V8l-10-6zm0 16l-8-4.8V8.8L12 4l8 4.8v4.4l-8 4.8z"/>
-        <path d="M12 8l-4 2.4v4.8l4 2.4 4-2.4v-4.8L12 8z"/>
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">B</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'FTX',
+    logo: (
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">F</text>
       </svg>
     ),
   },
   {
     name: 'Uniswap',
     logo: (
-      <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm3.5-9c.83 0 1.5-.67 1.5-1.5S16.33 8 15.5 8 14 8.67 14 9.5s.67 1.5 1.5 1.5zm-7 0c.83 0 1.5-.67 1.5-1.5S9.33 8 8.5 8 7 8.67 7 9.5 7.67 11 8.5 11zm3.5 6.5c2.33 0 4.31-1.46 5.11-3.5H6.89c.8 2.04 2.78 3.5 5.11 3.5z"/>
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">U</text>
       </svg>
     ),
   },
   {
     name: 'Raydium',
     logo: (
-      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
-        <rect x="3" y="3" width="18" height="18" rx="2" stroke="white" strokeWidth="2"/>
-        <path d="M9 9l6 6M15 9l-6 6" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">R</text>
       </svg>
     ),
   },
   {
     name: 'Phantom',
     logo: (
-      <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" className="w-12 h-12">
-        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15h4v-4h-4v4zm0-6h4V7h-4v4z"/>
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">P</text>
+      </svg>
+    ),
+  },
+  {
+    name: 'MetaMask',
+    logo: (
+      <svg viewBox="0 0 200 200" className="w-16 h-16">
+        <circle cx="100" cy="100" r="95" fill="white"/>
+        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">M</text>
       </svg>
     ),
   },
 ];
 
 export default function PartnersCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [scrollPosition, setScrollPosition] = useState(0);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % partners.length);
-    }, 3000); // Change logo every 3 seconds
+    const scrollContainer = document.getElementById('carousel-scroll');
+    if (!scrollContainer) return;
+
+    const scroll = () => {
+      setScrollPosition((prev) => {
+        const newPos = prev + 1;
+        // Reset to 0 when reaching the end for infinite loop
+        if (newPos > scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+          return 0;
+        }
+        return newPos;
+      });
+    };
+
+    const interval = setInterval(scroll, 30); // Smooth continuous scroll
 
     return () => clearInterval(interval);
   }, []);
 
-  const getVisibleLogos = () => {
-    const logos = [];
-    for (let i = 0; i < 3; i++) {
-      const index = (currentIndex + i) % partners.length;
-      logos.push(partners[index]);
+  useEffect(() => {
+    const scrollContainer = document.getElementById('carousel-scroll');
+    if (scrollContainer) {
+      scrollContainer.scrollLeft = scrollPosition;
     }
-    return logos;
-  };
-
-  const visibleLogos = getVisibleLogos();
+  }, [scrollPosition]);
 
   return (
-    <div className="flex justify-center py-8">
-      <div className="flex flex-col items-center gap-4 w-full">
-        {/* Carousel Container */}
-        <div className="flex items-center justify-center gap-8 w-full px-4">
-          {visibleLogos.map((partner, index) => (
+    <div className="w-full py-12">
+      <div className="text-center mb-8">
+        <p className="text-gray-400 text-sm uppercase tracking-wider">Trusted Partners</p>
+      </div>
+
+      {/* Carousel Container */}
+      <div className="relative overflow-hidden">
+        {/* Gradient overlays for fade effect */}
+        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
+        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
+
+        {/* Scrolling carousel */}
+        <div
+          id="carousel-scroll"
+          className="flex gap-12 overflow-x-hidden scroll-smooth px-8"
+          style={{ scrollBehavior: 'smooth' }}
+        >
+          {/* Duplicate logos for infinite loop effect */}
+          {[...partners, ...partners].map((partner, index) => (
             <div
               key={`${partner.name}-${index}`}
-              className={`transition-all duration-500 ease-out ${
-                index === 1
-                  ? 'scale-100 opacity-100'
-                  : 'scale-75 opacity-50'
-              }`}
+              className="flex-shrink-0 h-20 flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              <div className="w-24 h-24 flex items-center justify-center border border-white/30 rounded-lg hover:border-white/60 transition-all bg-black/20">
-                {partner.logo}
-              </div>
+              {partner.logo}
             </div>
           ))}
         </div>
-
-        {/* Dots Indicator */}
-        <div className="flex gap-2">
-          {partners.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === currentIndex
-                  ? 'bg-white w-6'
-                  : 'bg-white/30 hover:bg-white/60'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Divider Line */}
-        <div className="w-80 h-px bg-white/20 mt-2"></div>
       </div>
+
+      {/* Divider Line */}
+      <div className="w-full h-px bg-white/20 mt-8"></div>
     </div>
   );
 }
