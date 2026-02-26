@@ -52,7 +52,7 @@ export default function HeroSection() {
       }}></div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-screen px-4 text-center py-2">
+      <div className="relative z-10 flex flex-col items-center justify-start pt-16 px-4 text-center h-screen">
         {/* Main heading */}
         <h1 className="text-5xl md:text-6xl font-black text-white mb-2 tracking-tight leading-none">
           VAULT
