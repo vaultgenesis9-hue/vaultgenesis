@@ -61,12 +61,12 @@ export default function PartnersCarousel() {
         <div className={`absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
           isDark 
             ? 'bg-gradient-to-r from-black to-transparent'
-            : 'bg-gradient-to-r from-white to-transparent'
+            : 'bg-gradient-to-r from-[#fafaf8] to-transparent'
         }`}></div>
         <div className={`absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
           isDark 
             ? 'bg-gradient-to-l from-black to-transparent'
-            : 'bg-gradient-to-l from-white to-transparent'
+            : 'bg-gradient-to-l from-[#fafaf8] to-transparent'
         }`}></div>
 
         {/* Scrolling carousel */}

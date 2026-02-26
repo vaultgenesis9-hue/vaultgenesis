@@ -7,9 +7,9 @@ export default function HeroSection() {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`relative w-full min-h-screen overflow-hidden ${isDark ? 'bg-black' : 'bg-white'}`}>
+    <div className={`relative w-full min-h-screen overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
       {/* Background */}
-      <div className={`absolute inset-0 ${isDark ? 'bg-black' : 'bg-white'}`}></div>
+      <div className={`absolute inset-0 ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}></div>
       {/* Gradient overlay for depth */}
       <div className={`absolute inset-0 ${isDark ? 'bg-black/10' : 'bg-white/10'}`}></div>
       
@@ -19,9 +19,9 @@ export default function HeroSection() {
         height: '800px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(0, 0, 0, 0.15) 0%, rgba(255, 255, 255, 0) 70%)',
+          : 'radial-gradient(rgba(100, 100, 100, 0.25) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.6 : 0.4,
+        opacity: isDark ? 0.6 : 0.5,
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full animate-float-glow-2" style={{
@@ -29,9 +29,9 @@ export default function HeroSection() {
         height: '600px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(0, 0, 0, 0.15) 0%, rgba(255, 255, 255, 0) 70%)',
+          : 'radial-gradient(rgba(100, 100, 100, 0.25) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.6 : 0.4,
+        opacity: isDark ? 0.6 : 0.5,
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full animate-float-glow-3" style={{
@@ -39,9 +39,9 @@ export default function HeroSection() {
         height: '700px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0) 70%)',
+          : 'radial-gradient(rgba(80, 80, 80, 0.2) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.5 : 0.3,
+        opacity: isDark ? 0.5 : 0.4,
         pointerEvents: 'none'
       }}></div>
       <div className="absolute rounded-full animate-float-glow-4" style={{
@@ -49,9 +49,9 @@ export default function HeroSection() {
         height: '600px',
         background: isDark 
           ? 'radial-gradient(rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%)'
-          : 'radial-gradient(rgba(0, 0, 0, 0.08) 0%, rgba(255, 255, 255, 0) 70%)',
+          : 'radial-gradient(rgba(80, 80, 80, 0.15) 0%, rgba(250, 250, 248, 0) 70%)',
         filter: 'blur(80px)',
-        opacity: isDark ? 0.4 : 0.25,
+        opacity: isDark ? 0.4 : 0.35,
         pointerEvents: 'none'
       }}></div>
 

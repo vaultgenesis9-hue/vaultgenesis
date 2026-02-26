@@ -9,7 +9,7 @@ export default function Home() {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`h-screen overflow-hidden flex flex-col ${isDark ? 'bg-black' : 'bg-white'}`}>
+    <div className={`h-screen overflow-hidden flex flex-col ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
       <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <HeroSection />
     </div>
