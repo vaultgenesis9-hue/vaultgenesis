@@ -50,20 +50,20 @@ export default function PartnersCarousel() {
   }, [scrollPosition]);
 
   return (
-    <div className="w-full py-1">
-      <div className="text-center mb-2">
-        <p className={`text-sm uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Trusted Partners</p>
+    <div className="w-full py-2 sm:py-4">
+      <div className="text-center mb-3 sm:mb-4">
+        <p className={`text-xs sm:text-sm uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Trusted Partners</p>
       </div>
 
       {/* Carousel Container */}
       <div className="relative overflow-hidden flex justify-center">
-        {/* Gradient overlays for fade effect */}
-        <div className={`absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
+        {/* Gradient overlays for fade effect - reduced on mobile */}
+        <div className={`absolute left-0 top-0 bottom-0 w-8 sm:w-20 z-10 pointer-events-none ${
           isDark 
             ? 'bg-gradient-to-r from-black to-transparent'
             : 'bg-gradient-to-r from-[#fafaf8] to-transparent'
         }`}></div>
-        <div className={`absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
+        <div className={`absolute right-0 top-0 bottom-0 w-8 sm:w-20 z-10 pointer-events-none ${
           isDark 
             ? 'bg-gradient-to-l from-black to-transparent'
             : 'bg-gradient-to-l from-[#fafaf8] to-transparent'
@@ -72,19 +72,19 @@ export default function PartnersCarousel() {
         {/* Scrolling carousel */}
         <div
           id="carousel-scroll"
-          className="flex gap-8 overflow-x-hidden scroll-smooth px-6 w-full max-w-2xl"
+          className="flex gap-4 sm:gap-8 overflow-x-hidden scroll-smooth px-4 sm:px-6 w-full max-w-3xl"
           style={{ scrollBehavior: 'smooth' }}
         >
           {/* Duplicate logos for infinite loop effect */}
           {[...partners, ...partners, ...partners].map((partner, index) => (
             <div
               key={`${partner.name}-${index}`}
-              className="flex-shrink-0 h-12 flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="flex-shrink-0 h-10 sm:h-12 flex items-center justify-center hover:opacity-80 transition-opacity"
             >
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className={`h-7 w-auto object-contain ${
+                className={`h-5 sm:h-7 w-auto object-contain ${
                   isDark 
                     ? 'filter brightness-0 invert'
                     : 'filter brightness-0'
