@@ -47,8 +47,8 @@ export default function PartnersCarousel() {
   }, [scrollPosition]);
 
   return (
-    <div className="w-full py-6">
-      <div className="text-center mb-8">
+    <div className="w-full py-2">
+      <div className="text-center mb-4">
         <p className="text-gray-400 text-sm uppercase tracking-wider">Trusted Partners</p>
       </div>
 

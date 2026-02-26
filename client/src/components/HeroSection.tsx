@@ -52,42 +52,42 @@ export default function HeroSection() {
       }}></div>
 
       {/* Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center h-screen px-4 text-center py-8">
+      <div className="relative z-10 flex flex-col items-center justify-center h-screen px-4 text-center py-2">
         {/* Main heading */}
-        <h1 className="text-6xl md:text-7xl font-black text-white mb-4 tracking-tight leading-none">
+        <h1 className="text-5xl md:text-6xl font-black text-white mb-2 tracking-tight leading-none">
           VAULT
           <br />
           GENESIS
         </h1>
 
         {/* Subtitle */}
-        <p className="text-base md:text-lg text-gray-300 mb-8 max-w-2xl">
+        <p className="text-sm md:text-base text-gray-300 mb-6 max-w-2xl">
           Launch your meme coin, stake tokens, and trade with AI-powered bots
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-12">
-          <button className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-sm">
+        <div className="flex flex-col sm:flex-row gap-3 mb-8">
+          <button className="px-6 py-2 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-xs">
             CREATE TOKEN
           </button>
-          <button className="px-8 py-3 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-sm">
+          <button className="px-6 py-2 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-xs">
             CONNECT WALLET
           </button>
         </div>
 
         {/* Stats */}
-        <div className="flex flex-col sm:flex-row gap-8 text-center mb-6">
+        <div className="flex flex-col sm:flex-row gap-6 text-center mb-4">
           <div>
-            <p className="text-xl md:text-2xl font-bold text-white">314+</p>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">Tokens Launched</p>
+            <p className="text-base md:text-lg font-bold text-white">314+</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wider">Tokens Launched</p>
           </div>
           <div>
-            <p className="text-xl md:text-2xl font-bold text-white">$2.4M+</p>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">Total Volume</p>
+            <p className="text-base md:text-lg font-bold text-white">$2.4M+</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wider">Total Volume</p>
           </div>
           <div>
-            <p className="text-xl md:text-2xl font-bold text-white">1,200+</p>
-            <p className="text-gray-400 text-sm uppercase tracking-wider">Active Users</p>
+            <p className="text-base md:text-lg font-bold text-white">1,200+</p>
+            <p className="text-gray-400 text-xs uppercase tracking-wider">Active Users</p>
           </div>
         </div>
 
