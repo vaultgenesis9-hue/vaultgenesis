@@ -54,7 +54,7 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center px-4 text-center h-[calc(100vh-64px)]">
         {/* Main heading */}
-        <h1 className="text-4xl md:text-5xl font-black text-white mb-2 tracking-tight leading-none">
+        <h1 className="text-6xl md:text-7xl font-black text-white mb-2 tracking-tight leading-none">
           VAULT
           <br />
           GENESIS
