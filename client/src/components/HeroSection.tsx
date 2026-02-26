@@ -3,6 +3,8 @@ export default function HeroSection() {
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
       {/* Background - pure black */}
       <div className="absolute inset-0 bg-black"></div>
+      {/* Gradient overlay for depth */}
+      <div className="absolute inset-0 bg-black/10"></div>
 
 
 
