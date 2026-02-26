@@ -47,8 +47,8 @@ export default function PartnersCarousel() {
   }, [scrollPosition]);
 
   return (
-    <div className="w-full py-2">
-      <div className="text-center mb-4">
+    <div className="w-full py-1">
+      <div className="text-center mb-2">
         <p className="text-gray-400 text-sm uppercase tracking-wider">Trusted Partners</p>
       </div>
 
@@ -61,7 +61,7 @@ export default function PartnersCarousel() {
         {/* Scrolling carousel */}
         <div
           id="carousel-scroll"
-          className="flex gap-12 overflow-x-hidden scroll-smooth px-8 w-full max-w-2xl"
+          className="flex gap-8 overflow-x-hidden scroll-smooth px-6 w-full max-w-2xl"
           style={{ scrollBehavior: 'smooth' }}
         >
           {/* Duplicate logos for infinite loop effect */}
