@@ -1,78 +1,18 @@
 import { useEffect, useState } from 'react';
 
-// Partner logos as SVG components
+// Partner logos with actual SVG files
 const partners = [
   {
-    name: 'Coinbase',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16 fill-white">
-        <circle cx="100" cy="100" r="95" fill="none" stroke="white" strokeWidth="2"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="60" fontWeight="bold" fill="white">₿</text>
-      </svg>
-    ),
+    name: 'Binance',
+    logo: '/binance.svg',
   },
   {
     name: 'Kraken',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">K</text>
-      </svg>
-    ),
+    logo: '/kraken.svg',
   },
   {
-    name: 'Binance',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">B</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'FTX',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">F</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'Uniswap',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">U</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'Raydium',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">R</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'Phantom',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">P</text>
-      </svg>
-    ),
-  },
-  {
-    name: 'MetaMask',
-    logo: (
-      <svg viewBox="0 0 200 200" className="w-16 h-16">
-        <circle cx="100" cy="100" r="95" fill="white"/>
-        <text x="100" y="110" textAnchor="middle" fontSize="80" fontWeight="bold" fill="black">M</text>
-      </svg>
-    ),
+    name: 'Coinbase',
+    logo: '/coinbase.svg',
   },
 ];
 
@@ -121,16 +61,20 @@ export default function PartnersCarousel() {
         {/* Scrolling carousel */}
         <div
           id="carousel-scroll"
-          className="flex gap-12 overflow-x-hidden scroll-smooth px-8"
+          className="flex gap-16 overflow-x-hidden scroll-smooth px-8"
           style={{ scrollBehavior: 'smooth' }}
         >
           {/* Duplicate logos for infinite loop effect */}
-          {[...partners, ...partners].map((partner, index) => (
+          {[...partners, ...partners, ...partners].map((partner, index) => (
             <div
               key={`${partner.name}-${index}`}
               className="flex-shrink-0 h-20 flex items-center justify-center hover:opacity-80 transition-opacity"
             >
-              {partner.logo}
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="h-16 w-auto object-contain filter brightness-0 invert"
+              />
             </div>
           ))}
         </div>
