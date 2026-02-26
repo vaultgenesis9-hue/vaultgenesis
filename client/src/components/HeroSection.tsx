@@ -54,26 +54,26 @@ export default function HeroSection() {
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center px-4 text-center h-[calc(100vh-64px)]">
         {/* Main heading */}
-        <h1 className="text-6xl md:text-7xl text-white mb-2 tracking-tight leading-none">
+        <h1 className="text-8xl md:text-9xl text-white mb-4 tracking-tight leading-none">
           <span className="font-black">VAULT</span>
           <br />
           <span className="font-light text-gray-400">GENESIS</span>
         </h1>
 
         {/* Subtitle */}
-        <p className="text-xs md:text-sm text-gray-300 mb-4 max-w-2xl">
+        <p className="text-xs md:text-sm text-gray-300 mb-8 max-w-2xl">
           Launch your meme coin, stake tokens, and trade with AI-powered bots
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-1 mb-6">
+        <div className="flex flex-col sm:flex-row gap-1 mb-8">
           <button className="px-5 py-1.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-xs">
             CREATE TOKEN
           </button>
         </div>
 
         {/* Stats */}
-        <div className="flex flex-col sm:flex-row gap-4 text-center mb-3">
+        <div className="flex flex-col sm:flex-row gap-4 text-center mb-6">
           <div>
             <p className="text-sm md:text-base font-bold text-white">314+</p>
             <p className="text-gray-400 text-xs uppercase tracking-wider">Tokens Launched</p>
