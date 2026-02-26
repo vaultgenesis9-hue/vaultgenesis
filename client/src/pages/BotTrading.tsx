@@ -5,8 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function BotTrading() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [buyPrice, setBuyPrice] = useState("");
   const [sellPrice, setSellPrice] = useState("");
@@ -28,73 +31,102 @@ export default function BotTrading() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
-      <main className="pt-24 pb-20">
-        <div className="container">
-          <h1 className="text-5xl md:text-6xl font-black mb-4 uppercase tracking-tighter">BOT TRADING</h1>
-          <p className="text-lg text-muted-foreground mb-12">Automate your trading with AI-powered bots</p>
+    <div className={`min-h-screen ${isDark ? 'bg-black' : 'bg-[#fafaf8]'} relative overflow-hidden`}>
+      {/* Background gradients */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute rounded-full animate-float-glow-1" style={{
+          width: '600px',
+          height: '800px',
+          background: isDark 
+            ? 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)'
+            : 'radial-gradient(rgba(80, 80, 80, 0.4) 0%, rgba(250, 250, 248, 0) 70%)',
+          filter: 'blur(80px)',
+          opacity: isDark ? 0.6 : 0.8,
+        }}></div>
+        <div className="absolute rounded-full animate-float-glow-2" style={{
+          width: '400px',
+          height: '600px',
+          background: isDark 
+            ? 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)'
+            : 'radial-gradient(rgba(80, 80, 80, 0.4) 0%, rgba(250, 250, 248, 0) 70%)',
+          filter: 'blur(80px)',
+          opacity: isDark ? 0.6 : 0.8,
+        }}></div>
+      </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
+      <main className="relative z-10 pt-24 pb-20">
+        <div className="container mx-auto px-4">
+          <h1 className={`text-5xl sm:text-6xl md:text-7xl font-black mb-4 uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>BOT TRADING</h1>
+          <p className={`text-sm sm:text-base md:text-lg mb-12 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Automate your trading with AI-powered bots</p>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-2 space-y-6">
-              <Card className="p-8 bg-card border-border">
-                <h2 className="text-2xl font-black mb-6 uppercase tracking-wider">Create Trading Bot</h2>
+              <Card className={`p-6 sm:p-8 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
+                <h2 className={`text-xl sm:text-2xl font-black mb-6 uppercase tracking-wider ${isDark ? 'text-white' : 'text-black'}`}>Create Trading Bot</h2>
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="buyPrice" className="text-foreground font-bold uppercase text-sm">Buy Price (USD)</Label>
+                    <Label htmlFor="buyPrice" className={`block text-xs sm:text-sm font-semibold mb-3 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Buy Price (USD)</Label>
                     <Input
                       id="buyPrice"
                       type="number"
                       placeholder="Enter buy price"
                       value={buyPrice}
                       onChange={(e) => setBuyPrice(e.target.value)}
-                      className="mt-2 bg-input border-border text-foreground"
+                      className={`text-sm ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-black'}`}
                     />
                   </div>
                   <div>
-                    <Label htmlFor="sellPrice" className="text-foreground font-bold uppercase text-sm">Sell Price (USD)</Label>
+                    <Label htmlFor="sellPrice" className={`block text-xs sm:text-sm font-semibold mb-3 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>Sell Price (USD)</Label>
                     <Input
                       id="sellPrice"
                       type="number"
                       placeholder="Enter sell price"
                       value={sellPrice}
                       onChange={(e) => setSellPrice(e.target.value)}
-                      className="mt-2 bg-input border-border text-foreground"
+                      className={`text-sm ${isDark ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-300 text-black'}`}
                     />
                   </div>
-                  <Button
+                  <button
                     onClick={handleCreateBot}
-                    size="lg"
-                    className="w-full bg-foreground text-background hover:bg-accent font-bold uppercase"
+                    className={`w-full py-3 px-4 rounded-lg font-semibold uppercase text-sm transition-all ${
+                      isDark
+                        ? 'bg-white text-black hover:bg-gray-200'
+                        : 'bg-black text-white hover:bg-gray-900'
+                    }`}
                   >
                     CREATE BOT
-                  </Button>
+                  </button>
                 </div>
               </Card>
 
               <div className="space-y-4">
-                <h2 className="text-2xl font-black uppercase tracking-wider">Active Bots</h2>
+                <h2 className={`text-xl sm:text-2xl font-black uppercase tracking-wider ${isDark ? 'text-white' : 'text-black'}`}>Active Bots</h2>
                 {activeBots.map((bot) => (
-                  <Card key={bot.id} className="p-6 bg-card border-border">
+                  <Card key={bot.id} className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
                     <div className="flex justify-between items-start mb-4">
                       <div>
-                        <h3 className="text-lg font-bold text-foreground">{bot.token} TRADING BOT</h3>
-                        <p className={`text-sm font-bold ${bot.status === "Active" ? "text-accent" : "text-muted-foreground"}`}>
+                        <h3 className={`text-base sm:text-lg font-bold ${isDark ? 'text-white' : 'text-black'}`}>{bot.token} TRADING BOT</h3>
+                        <p className={`text-xs sm:text-sm font-bold ${bot.status === "Active" ? (isDark ? 'text-white' : 'text-black') : (isDark ? 'text-gray-400' : 'text-gray-600')}`}>
                           {bot.status}
                         </p>
                       </div>
-                      <Button variant="outline" size="sm" className="border-foreground text-foreground">
+                      <button className={`px-3 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-all ${
+                        isDark
+                          ? 'border border-gray-600 text-white hover:bg-gray-800'
+                          : 'border border-gray-400 text-black hover:bg-gray-100'
+                      }`}>
                         {bot.status === "Active" ? "PAUSE" : "RESUME"}
-                      </Button>
+                      </button>
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-muted-foreground uppercase font-bold">Profit</p>
-                        <p className="font-bold text-accent mt-2">{bot.profit}</p>
+                        <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Profit</p>
+                        <p className={`font-bold mt-2 ${isDark ? 'text-white' : 'text-black'}`}>{bot.profit}</p>
                       </div>
                       <div>
-                        <p className="text-sm text-muted-foreground uppercase font-bold">Trades</p>
-                        <p className="font-bold text-foreground mt-2">{bot.trades}</p>
+                        <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Trades</p>
+                        <p className={`font-bold mt-2 ${isDark ? 'text-white' : 'text-black'}`}>{bot.trades}</p>
                       </div>
                     </div>
                   </Card>
@@ -103,14 +135,14 @@ export default function BotTrading() {
             </div>
 
             <div className="space-y-6">
-              <Card className="p-6 bg-card border-border">
-                <h3 className="font-bold text-foreground mb-4 uppercase tracking-wider">Total Profit</h3>
-                <p className="text-3xl font-black text-accent">+$4,540</p>
+              <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
+                <h3 className={`font-bold mb-4 uppercase tracking-wider text-base ${isDark ? 'text-white' : 'text-black'}`}>Total Profit</h3>
+                <p className={`text-2xl sm:text-3xl font-black ${isDark ? 'text-white' : 'text-black'}`}>+$4,540</p>
               </Card>
 
-              <Card className="p-6 bg-card border-border">
-                <h3 className="font-bold text-foreground mb-4 uppercase tracking-wider">Total Trades</h3>
-                <p className="text-3xl font-black text-foreground">44</p>
+              <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
+                <h3 className={`font-bold mb-4 uppercase tracking-wider text-base ${isDark ? 'text-white' : 'text-black'}`}>Total Trades</h3>
+                <p className={`text-2xl sm:text-3xl font-black ${isDark ? 'text-white' : 'text-black'}`}>44</p>
               </Card>
             </div>
           </div>
