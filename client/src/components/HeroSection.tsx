@@ -1,3 +1,5 @@
+import StickManAnimation from './StickManAnimation';
+
 export default function HeroSection() {
   return (
     <div className="relative w-full min-h-screen bg-black overflow-hidden">
@@ -87,6 +89,9 @@ export default function HeroSection() {
             <p className="text-gray-400 text-sm uppercase tracking-wider">Active Users</p>
           </div>
         </div>
+
+        {/* Stick Man Animation */}
+        <StickManAnimation />
       </div>
     </div>
   );

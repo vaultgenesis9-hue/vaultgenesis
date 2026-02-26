@@ -31,7 +31,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
           onClick={() => navigate("/")}
           className="flex items-center gap-2 hover:opacity-80 transition"
         >
-          <img src={LOGO_URL} alt="VaultGenesis" className="h-12 w-auto" />
+          <img src={LOGO_URL} alt="VaultGenesis" className="h-14 w-auto" />
         </button>
 
         {/* Hamburger Menu Icon - Always Visible */}
