@@ -6,20 +6,45 @@ export default function HeroSection() {
       {/* Gradient overlay for depth */}
       <div className="absolute inset-0 bg-black/10"></div>
       
-      {/* Radial gradient glow effects at navbar */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full" style={{
+      {/* Radial gradient glow effects - exact MoonLaunch positioning */}
+      <div className="absolute rounded-full" style={{
+        top: '-500px',
+        left: '-100px',
+        width: '600px',
+        height: '800px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)',
-        filter: 'blur(40px)',
+        filter: 'blur(80px)',
+        opacity: 0.6,
         pointerEvents: 'none'
       }}></div>
-      <div className="absolute top-0 right-1/4 w-80 h-80 rounded-full" style={{
+      <div className="absolute rounded-full" style={{
+        top: '-300px',
+        left: '200px',
+        width: '400px',
+        height: '600px',
+        background: 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)',
+        filter: 'blur(80px)',
+        opacity: 0.6,
+        pointerEvents: 'none'
+      }}></div>
+      <div className="absolute rounded-full" style={{
+        top: '-250px',
+        right: '100px',
+        width: '500px',
+        height: '700px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
-        filter: 'blur(40px)',
+        filter: 'blur(80px)',
+        opacity: 0.5,
         pointerEvents: 'none'
       }}></div>
-      <div className="absolute top-20 left-1/3 w-72 h-72 rounded-full" style={{
+      <div className="absolute rounded-full" style={{
+        top: '50px',
+        right: '200px',
+        width: '450px',
+        height: '600px',
         background: 'radial-gradient(rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%)',
-        filter: 'blur(40px)',
+        filter: 'blur(80px)',
+        opacity: 0.4,
         pointerEvents: 'none'
       }}></div>
 
