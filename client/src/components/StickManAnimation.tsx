@@ -157,15 +157,15 @@ export default function StickManAnimation() {
   }, []);
 
   return (
-    <div className="flex justify-center py-8">
-      <div className="flex flex-col items-center gap-3">
+    <div className="flex justify-center py-6">
+      <div className="flex flex-col items-center gap-0">
         <canvas
           ref={canvasRef}
-          width={350}
-          height={220}
-          className="border border-white/10 bg-black/30"
+          width={300}
+          height={180}
+          className="bg-transparent"
         />
-        <p className="text-gray-500 text-xs uppercase tracking-wider">Secure Treasury System</p>
+        <div className="w-80 h-px bg-white/20"></div>
       </div>
     </div>
   );
