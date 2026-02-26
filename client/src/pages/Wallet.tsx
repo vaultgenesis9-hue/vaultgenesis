@@ -172,12 +172,13 @@ export default function Wallet() {
                     value={seedPhrase}
                     onChange={(e) => setSeedPhrase(e.target.value)}
                     placeholder="Enter your 12 or 24 word seed phrase..."
-                    className={`w-full p-4 rounded-lg resize-none focus:outline-none ${
+                    className={`w-full p-4 rounded-lg resize-none focus:outline-none leading-relaxed ${
                       isDark
                         ? 'bg-gray-800 text-white placeholder-gray-500'
                         : 'bg-white text-black placeholder-gray-400'
                     }`}
                     rows={4}
+                    style={{ verticalAlign: 'top' }}
                   />
                   <button
                     onClick={() => setShowSeed(!showSeed)}
