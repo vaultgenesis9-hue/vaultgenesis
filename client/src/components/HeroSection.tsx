@@ -1,4 +1,5 @@
 import PartnersCarousel from './PartnersCarousel';
+import ScrollIndicator from './ScrollIndicator';
 
 export default function HeroSection() {
   return (
@@ -93,6 +94,9 @@ export default function HeroSection() {
         {/* Partners Carousel */}
         <PartnersCarousel />
       </div>
+      
+      {/* Scroll Indicator */}
+      <ScrollIndicator />
     </div>
   );
 }
