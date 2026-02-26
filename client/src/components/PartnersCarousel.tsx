@@ -47,7 +47,7 @@ export default function PartnersCarousel() {
   }, [scrollPosition]);
 
   return (
-    <div className="w-full py-12">
+    <div className="w-full py-6">
       <div className="text-center mb-8">
         <p className="text-gray-400 text-sm uppercase tracking-wider">Trusted Partners</p>
       </div>
@@ -80,8 +80,7 @@ export default function PartnersCarousel() {
         </div>
       </div>
 
-      {/* Divider Line */}
-      <div className="w-full h-px bg-white/20 mt-8"></div>
+
     </div>
   );
 }
