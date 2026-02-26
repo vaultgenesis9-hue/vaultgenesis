@@ -167,18 +167,18 @@ export default function Wallet() {
                 <label className={`block text-sm font-semibold mb-3 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
                   Seed Phrase (12 or 24 words)
                 </label>
-                <div className={`relative border rounded-lg ${isDark ? 'border-gray-700' : 'border-gray-300'}`}>
+                <div className={`relative rounded-lg overflow-hidden ${isDark ? 'border border-gray-700' : 'border border-gray-300'}`}>
                   <textarea
                     value={seedPhrase}
                     onChange={(e) => setSeedPhrase(e.target.value)}
                     placeholder="Enter your 12 or 24 word seed phrase..."
-                    className={`w-full p-4 rounded-lg resize-none focus:outline-none leading-relaxed ${
+                    className={`w-full px-4 py-3 sm:px-5 sm:py-4 resize-none focus:outline-none leading-relaxed focus:ring-2 ${
                       isDark
-                        ? 'bg-gray-800 text-white placeholder-gray-500'
-                        : 'bg-white text-black placeholder-gray-400'
+                        ? 'bg-gray-800 text-white placeholder-gray-500 focus:ring-gray-600'
+                        : 'bg-white text-black placeholder-gray-400 focus:ring-gray-300'
                     }`}
-                    rows={4}
-                    style={{ verticalAlign: 'top' }}
+                    rows={5}
+                    style={{ verticalAlign: 'top', boxSizing: 'border-box' }}
                   />
                   <button
                     onClick={() => setShowSeed(!showSeed)}
