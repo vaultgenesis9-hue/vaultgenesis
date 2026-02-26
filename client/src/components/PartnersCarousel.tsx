@@ -61,19 +61,19 @@ export default function PartnersCarousel() {
         {/* Scrolling carousel */}
         <div
           id="carousel-scroll"
-          className="flex gap-12 overflow-x-hidden scroll-smooth px-8 w-full max-w-4xl"
+          className="flex gap-12 overflow-x-hidden scroll-smooth px-8 w-full max-w-2xl"
           style={{ scrollBehavior: 'smooth' }}
         >
           {/* Duplicate logos for infinite loop effect */}
           {[...partners, ...partners, ...partners].map((partner, index) => (
             <div
               key={`${partner.name}-${index}`}
-              className="flex-shrink-0 h-16 flex items-center justify-center hover:opacity-80 transition-opacity"
+              className="flex-shrink-0 h-12 flex items-center justify-center hover:opacity-80 transition-opacity"
             >
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className="h-10 w-auto object-contain filter brightness-0 invert"
+                className="h-7 w-auto object-contain filter brightness-0 invert"
               />
             </div>
           ))}
