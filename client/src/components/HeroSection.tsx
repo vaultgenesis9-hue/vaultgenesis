@@ -66,7 +66,7 @@ export default function HeroSection() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 mb-6">
+        <div className="flex flex-col sm:flex-row gap-1 mb-6">
           <button className="px-5 py-1.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-xs">
             CREATE TOKEN
           </button>
