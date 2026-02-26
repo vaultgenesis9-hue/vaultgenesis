@@ -1,10 +1,21 @@
 import PartnersCarousel from './PartnersCarousel';
 import ScrollIndicator from './ScrollIndicator';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useEffect, useState } from 'react';
 
 export default function HeroSection() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const [isAnimating, setIsAnimating] = useState(true);
+
+  useEffect(() => {
+    // Animation completes after 2.5 seconds
+    const timer = setTimeout(() => {
+      setIsAnimating(false);
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className={`relative w-full min-h-screen overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
@@ -57,8 +68,8 @@ export default function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 flex flex-col items-center justify-center px-4 text-center h-[calc(100vh-64px)]">
-        {/* Main heading */}
-        <h1 className={`text-8xl md:text-9xl mb-4 tracking-tight leading-none ${isDark ? 'text-white' : 'text-black'}`}>
+        {/* Main heading with shatter animation */}
+        <h1 className={`text-8xl md:text-9xl mb-4 tracking-tight leading-none ${isAnimating ? 'shatter-text' : ''} ${isDark ? 'text-white' : 'text-black'}`}>
           <span className="font-black">VAULT</span>
           <br />
           <span className={`font-light ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>GENESIS</span>
@@ -98,10 +109,10 @@ export default function HeroSection() {
 
         {/* Partners Carousel */}
         <PartnersCarousel />
+
+        {/* Scroll Indicator */}
+        <ScrollIndicator />
       </div>
-      
-      {/* Scroll Indicator */}
-      <ScrollIndicator />
     </div>
   );
 }
