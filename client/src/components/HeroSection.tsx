@@ -5,6 +5,23 @@ export default function HeroSection() {
       <div className="absolute inset-0 bg-black"></div>
       {/* Gradient overlay for depth */}
       <div className="absolute inset-0 bg-black/10"></div>
+      
+      {/* Radial gradient glow effects at navbar */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 rounded-full" style={{
+        background: 'radial-gradient(rgba(255, 255, 255, 0.3) 0%, rgba(0, 0, 0, 0) 70%)',
+        filter: 'blur(40px)',
+        pointerEvents: 'none'
+      }}></div>
+      <div className="absolute top-0 right-1/4 w-80 h-80 rounded-full" style={{
+        background: 'radial-gradient(rgba(255, 255, 255, 0.25) 0%, rgba(0, 0, 0, 0) 70%)',
+        filter: 'blur(40px)',
+        pointerEvents: 'none'
+      }}></div>
+      <div className="absolute top-20 left-1/3 w-72 h-72 rounded-full" style={{
+        background: 'radial-gradient(rgba(255, 255, 255, 0.2) 0%, rgba(0, 0, 0, 0) 70%)',
+        filter: 'blur(40px)',
+        pointerEvents: 'none'
+      }}></div>
 
 
 
