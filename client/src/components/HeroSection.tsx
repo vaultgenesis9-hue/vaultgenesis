@@ -70,9 +70,6 @@ export default function HeroSection() {
           <button className="px-5 py-1.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-xs">
             CREATE TOKEN
           </button>
-          <button className="px-5 py-1.5 bg-white text-black font-bold rounded-full hover:bg-gray-200 transition uppercase text-xs">
-            CONNECT WALLET
-          </button>
         </div>
 
         {/* Stats */}
