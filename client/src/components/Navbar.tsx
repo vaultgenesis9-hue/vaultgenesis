@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Wallet } from "lucide-react";
 import { useLocation } from "wouter";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663061635487/ESNvsZAfVRrpKtvv.png";
@@ -36,8 +36,8 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
         {/* Hamburger Menu Icon - Always Visible */}
         <div className="flex items-center gap-4">
-          <button className="px-6 py-2 bg-white text-black font-bold hover:bg-gray-200 transition uppercase text-sm">
-            CONNECT WALLET
+          <button className="text-white p-2 hover:opacity-70 transition">
+            <Wallet size={24} />
           </button>
           <button
             className="text-white p-2 hover:bg-white/10 rounded transition"
