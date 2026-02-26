@@ -1,4 +1,9 @@
+import { useTheme } from '@/contexts/ThemeContext';
+
 export default function ScrollIndicator() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   return (
     <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-20">
       <style>{`
@@ -25,9 +30,17 @@ export default function ScrollIndicator() {
       {/* Scroll indicator - mouse wheel icon */}
       <div className="flex flex-col items-center gap-2">
         {/* Mouse wheel outline */}
-        <div className="w-5 h-8 border border-white/40 rounded-full flex items-center justify-center">
+        <div className={`w-5 h-8 border rounded-full flex items-center justify-center ${
+          isDark 
+            ? 'border-white/40'
+            : 'border-black/40'
+        }`}>
           {/* Scroll dot */}
-          <div className="scroll-indicator w-0.5 h-1.5 bg-white/40 rounded-full"></div>
+          <div className={`scroll-indicator w-0.5 h-1.5 rounded-full ${
+            isDark 
+              ? 'bg-white/40'
+              : 'bg-black/40'
+          }`}></div>
         </div>
       </div>
     </div>

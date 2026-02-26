@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Menu, X, Wallet } from "lucide-react";
+import { Menu, X, Wallet, Sun, Moon } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const LOGO_URL = "https://files.manuscdn.com/user_upload_by_module/session_file/310519663061635487/ESNvsZAfVRrpKtvv.png";
 
@@ -19,11 +20,14 @@ const navLinks = [
 
 export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProps) {
   const [, navigate] = useLocation();
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-black relative" style={{
-      background: 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)',
-      boxShadow: 'inset 0 -20px 40px -20px rgba(0, 0, 0, 0.5)'
+    <nav className={`fixed top-0 left-0 right-0 z-50 relative ${theme === "dark" ? "bg-black" : "bg-white"}`} style={{
+      background: theme === "dark" 
+        ? 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)'
+        : 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0) 70%), rgb(255, 255, 255)',
+      boxShadow: theme === "dark" ? 'inset 0 -20px 40px -20px rgba(0, 0, 0, 0.5)' : 'inset 0 -20px 40px -20px rgba(0, 0, 0, 0.1)'
     }}>
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         {/* Logo */}
@@ -36,11 +40,14 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
         {/* Hamburger Menu Icon - Always Visible */}
         <div className="flex items-center gap-4">
-          <button className="text-white p-2 hover:opacity-70 transition">
-            <Wallet size={24} />
+          <button className="p-2 hover:opacity-70 transition" onClick={toggleTheme}>
+            {theme === "dark" ? <Sun size={24} className="text-white" /> : <Moon size={24} className="text-black" />}
+          </button>
+          <button className="p-2 hover:opacity-70 transition">
+            <Wallet size={24} className={theme === "dark" ? "text-white" : "text-black"} />
           </button>
           <button
-            className="text-white p-2 hover:bg-white/10 rounded transition"
+            className={`p-2 hover:bg-white/10 rounded transition ${theme === "dark" ? "text-white" : "text-black"}`}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
@@ -51,7 +58,9 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
       {/* Mobile Menu - Slides Down */}
       {mobileMenuOpen && (
         <div className="animate-in fade-in slide-in-from-top-2" style={{
-          background: 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)'
+          background: theme === "dark"
+            ? 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%), rgb(0, 0, 0)'
+            : 'radial-gradient(ellipse 800px 400px at 50% 0%, rgba(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0) 70%), rgb(255, 255, 255)'
         }}>
           <div className="container mx-auto px-4 py-6 flex flex-col gap-4">
             {navLinks.map((link) => (
@@ -61,7 +70,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
                   navigate(link.href);
                   setMobileMenuOpen(false);
                 }}
-                className="text-white text-left font-bold hover:text-gray-300 transition uppercase text-sm py-2"
+                className={`text-left font-bold transition uppercase text-sm py-2 ${theme === "dark" ? "text-white hover:text-gray-300" : "text-black hover:text-gray-600"}`}
               >
                 {link.label}
               </button>

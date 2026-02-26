@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Partner logos with actual SVG files
 const partners = [
@@ -18,6 +19,8 @@ const partners = [
 
 export default function PartnersCarousel() {
   const [scrollPosition, setScrollPosition] = useState(0);
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
 
   useEffect(() => {
     const scrollContainer = document.getElementById('carousel-scroll');
@@ -49,14 +52,22 @@ export default function PartnersCarousel() {
   return (
     <div className="w-full py-1">
       <div className="text-center mb-2">
-        <p className="text-gray-400 text-sm uppercase tracking-wider">Trusted Partners</p>
+        <p className={`text-sm uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Trusted Partners</p>
       </div>
 
       {/* Carousel Container */}
       <div className="relative overflow-hidden flex justify-center">
         {/* Gradient overlays for fade effect */}
-        <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-black to-transparent z-10 pointer-events-none"></div>
-        <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-black to-transparent z-10 pointer-events-none"></div>
+        <div className={`absolute left-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
+          isDark 
+            ? 'bg-gradient-to-r from-black to-transparent'
+            : 'bg-gradient-to-r from-white to-transparent'
+        }`}></div>
+        <div className={`absolute right-0 top-0 bottom-0 w-20 z-10 pointer-events-none ${
+          isDark 
+            ? 'bg-gradient-to-l from-black to-transparent'
+            : 'bg-gradient-to-l from-white to-transparent'
+        }`}></div>
 
         {/* Scrolling carousel */}
         <div
@@ -73,7 +84,11 @@ export default function PartnersCarousel() {
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className="h-7 w-auto object-contain filter brightness-0 invert"
+                className={`h-7 w-auto object-contain ${
+                  isDark 
+                    ? 'filter brightness-0 invert'
+                    : 'filter brightness-0'
+                }`}
               />
             </div>
           ))}
