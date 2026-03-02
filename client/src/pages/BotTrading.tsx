@@ -1,9 +1,11 @@
 import Navbar from "@/components/Navbar";
+import CandlestickChart from "@/components/CandlestickChart";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import { TrendingUp, TrendingDown, Activity, DollarSign, Target, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
+import { Time } from "lightweight-charts";
 
 type BotStatus = 'inactive' | 'active' | 'paused';
 type Strategy = 'scalping' | 'arbitrage' | 'momentum';
@@ -18,6 +20,8 @@ interface Bot {
   winRate: number;
   avgProfitPerTrade: number;
   totalTrades: number;
+  wins: number;
+  losses: number;
   stopLoss: number;
   takeProfit: number;
   subscriptionFee: number;
@@ -34,6 +38,15 @@ interface Trade {
   amount: number;
   timestamp: string;
   profit?: number;
+  isWin?: boolean;
+}
+
+interface Candle {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
 }
 
 export default function BotTrading() {
@@ -47,13 +60,15 @@ export default function BotTrading() {
   const [takeProfit, setTakeProfit] = useState('5');
   const [isCreating, setIsCreating] = useState(false);
   const [selectedBotId, setSelectedBotId] = useState('1');
-  const [chartPrice, setChartPrice] = useState(45230);
+  const [chartData, setChartData] = useState<Candle[]>([]);
+
   const [trades, setTrades] = useState<Trade[]>([
     { id: '1', botId: '1', type: 'buy', price: 45100, amount: 0.11, timestamp: '14:32:05', profit: undefined },
-    { id: '2', botId: '1', type: 'sell', price: 45280, amount: 0.11, timestamp: '14:35:22', profit: 19.80 },
+    { id: '2', botId: '1', type: 'sell', price: 45280, amount: 0.11, timestamp: '14:35:22', profit: 19.80, isWin: true },
     { id: '3', botId: '1', type: 'buy', price: 45150, amount: 0.11, timestamp: '14:38:45', profit: undefined },
-    { id: '4', botId: '1', type: 'sell', price: 45420, amount: 0.11, timestamp: '14:42:10', profit: 29.70 },
+    { id: '4', botId: '1', type: 'sell', price: 45420, amount: 0.11, timestamp: '14:42:10', profit: 29.70, isWin: true },
     { id: '5', botId: '1', type: 'buy', price: 45200, amount: 0.11, timestamp: '14:45:33', profit: undefined },
+    { id: '6', botId: '1', type: 'sell', price: 45050, amount: 0.11, timestamp: '14:48:15', profit: -15.50, isWin: false },
   ]);
 
   const [bots, setBots] = useState<Bot[]>([
@@ -67,6 +82,8 @@ export default function BotTrading() {
       winRate: 68,
       avgProfitPerTrade: 102,
       totalTrades: 24,
+      wins: 16,
+      losses: 8,
       stopLoss: 2,
       takeProfit: 5,
       subscriptionFee: 50,
@@ -84,6 +101,8 @@ export default function BotTrading() {
       winRate: 82,
       avgProfitPerTrade: 407,
       totalTrades: 12,
+      wins: 10,
+      losses: 2,
       stopLoss: 1.5,
       takeProfit: 8,
       subscriptionFee: 75,
@@ -93,31 +112,40 @@ export default function BotTrading() {
     },
   ]);
 
-  // Simulate real-time price updates
+  // Generate realistic candlestick data
   useEffect(() => {
-    const interval = setInterval(() => {
-      setChartPrice(prev => {
-        const change = (Math.random() - 0.5) * 200;
-        return Math.max(44000, Math.min(47000, prev + change));
-      });
+    const generateCandleData = () => {
+      const candles: Candle[] = [];
+      let basePrice = 45000;
+      const now = Math.floor(Date.now() / 1000);
 
-      // Randomly add new trades
-      if (Math.random() > 0.7) {
-        const newTrade: Trade = {
-          id: String(Date.now()),
-          botId: selectedBotId,
-          type: Math.random() > 0.5 ? 'buy' : 'sell',
-          price: chartPrice + (Math.random() - 0.5) * 100,
-          amount: 0.1 + Math.random() * 0.05,
-          timestamp: new Date().toLocaleTimeString(),
-          profit: Math.random() > 0.5 ? Math.random() * 50 : undefined,
-        };
-        setTrades(prev => [newTrade, ...prev.slice(0, 9)]);
+      for (let i = 50; i >= 0; i--) {
+        const time = now - i * 300; // 5-minute candles
+        const open = basePrice + (Math.random() - 0.5) * 200;
+        const close = open + (Math.random() - 0.5) * 300;
+        const high = Math.max(open, close) + Math.random() * 150;
+        const low = Math.min(open, close) - Math.random() * 150;
+
+        candles.push({
+          time,
+          open: Math.round(open),
+          high: Math.round(high),
+          low: Math.round(low),
+          close: Math.round(close),
+        });
+
+        basePrice = close;
       }
-    }, 2000);
 
+      setChartData(candles);
+    };
+
+    generateCandleData();
+
+    // Update chart data periodically
+    const interval = setInterval(generateCandleData, 5000);
     return () => clearInterval(interval);
-  }, [selectedBotId]);
+  }, []);
 
   const strategies = [
     {
@@ -171,6 +199,8 @@ export default function BotTrading() {
         winRate: 0,
         avgProfitPerTrade: 0,
         totalTrades: 0,
+        wins: 0,
+        losses: 0,
         stopLoss: parseFloat(stopLoss),
         takeProfit: parseFloat(takeProfit),
         subscriptionFee: selectedStrategy === 'scalping' ? 50 : selectedStrategy === 'arbitrage' ? 75 : 100,
@@ -211,6 +241,8 @@ export default function BotTrading() {
   const totalAllocation = bots.reduce((sum, bot) => sum + bot.allocation, 0);
   const totalProfit = bots.reduce((sum, bot) => sum + bot.totalProfit, 0);
   const totalTrades = bots.reduce((sum, bot) => sum + bot.totalTrades, 0);
+  const totalWins = bots.reduce((sum, bot) => sum + bot.wins, 0);
+  const totalLosses = bots.reduce((sum, bot) => sum + bot.losses, 0);
   const selectedBot = bots.find(b => b.id === selectedBotId);
 
   return (
@@ -378,32 +410,50 @@ export default function BotTrading() {
           )}
 
           {/* Stats Overview */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
             <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Allocated</p>
-                  <p className={`text-2xl sm:text-3xl font-black mt-2 ${isDark ? 'text-white' : 'text-black'}`}>${totalAllocation.toLocaleString()}</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-2 ${isDark ? 'text-white' : 'text-black'}`}>${totalAllocation.toLocaleString()}</p>
                 </div>
-                <DollarSign size={32} className={isDark ? 'text-gray-600' : 'text-gray-400'} />
+                <DollarSign size={28} className={isDark ? 'text-gray-600' : 'text-gray-400'} />
               </div>
             </Card>
             <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Profit</p>
-                  <p className={`text-2xl sm:text-3xl font-black mt-2 text-green-500`}>+${totalProfit.toLocaleString()}</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-2 text-green-500`}>+${totalProfit.toLocaleString()}</p>
                 </div>
-                <TrendingUp size={32} className="text-green-500" />
+                <TrendingUp size={28} className="text-green-500" />
               </div>
             </Card>
             <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
               <div className="flex items-center justify-between">
                 <div>
                   <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Trades</p>
-                  <p className={`text-2xl sm:text-3xl font-black mt-2 ${isDark ? 'text-white' : 'text-black'}`}>{totalTrades}</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-2 ${isDark ? 'text-white' : 'text-black'}`}>{totalTrades}</p>
                 </div>
-                <Activity size={32} className={isDark ? 'text-gray-600' : 'text-gray-400'} />
+                <Activity size={28} className={isDark ? 'text-gray-600' : 'text-gray-400'} />
+              </div>
+            </Card>
+            <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Wins</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-2 text-green-500`}>{totalWins}</p>
+                </div>
+                <ChevronUp size={28} className="text-green-500" />
+              </div>
+            </Card>
+            <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className={`text-xs sm:text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Losses</p>
+                  <p className={`text-xl sm:text-2xl font-black mt-2 text-red-500`}>{totalLosses}</p>
+                </div>
+                <ChevronDown size={28} className="text-red-500" />
               </div>
             </Card>
           </div>
@@ -412,42 +462,12 @@ export default function BotTrading() {
           {bots.length > 0 && (
             <div className="mb-8">
               <h2 className={`text-2xl font-black mb-6 uppercase tracking-wider ${isDark ? 'text-white' : 'text-black'}`}>Live Trading Monitor</h2>
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                 {/* Chart Area */}
-                <div className="lg:col-span-2">
+                <div className="lg:col-span-3">
                   <Card className={`p-6 rounded-2xl border ${isDark ? 'bg-gray-900/50 border-gray-800' : 'bg-white/50 border-gray-300'} backdrop-blur-sm`}>
-                    <div className="mb-4">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <p className={`text-sm uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Current Price</p>
-                          <p className={`text-3xl sm:text-4xl font-black mt-2 ${isDark ? 'text-white' : 'text-black'}`}>${chartPrice.toFixed(2)}</p>
-                        </div>
-                        <div className={`text-right px-3 py-2 rounded-lg ${selectedBot?.priceChange && selectedBot.priceChange > 0 ? (isDark ? 'bg-green-900/20' : 'bg-green-100/30') : (isDark ? 'bg-red-900/20' : 'bg-red-100/30')}`}>
-                          <p className={`text-sm font-bold ${selectedBot?.priceChange && selectedBot.priceChange > 0 ? 'text-green-500' : 'text-red-500'}`}>
-                            {selectedBot?.priceChange && selectedBot.priceChange > 0 ? '+' : ''}{selectedBot?.priceChange?.toFixed(2)}%
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Simplified Chart */}
-                    <div className={`h-64 rounded-lg p-4 ${isDark ? 'bg-gray-800' : 'bg-white'} relative overflow-hidden`}>
-                      <svg className="w-full h-full" viewBox="0 0 400 200" preserveAspectRatio="none">
-                        {/* Grid lines */}
-                        <line x1="0" y1="50" x2="400" y2="50" stroke={isDark ? '#444' : '#ddd'} strokeWidth="1" />
-                        <line x1="0" y1="100" x2="400" y2="100" stroke={isDark ? '#444' : '#ddd'} strokeWidth="1" />
-                        <line x1="0" y1="150" x2="400" y2="150" stroke={isDark ? '#444' : '#ddd'} strokeWidth="1" />
-                        
-                        {/* Price line (animated) */}
-                        <polyline
-                          points={`0,${100 + (Math.sin(Date.now() / 1000) * 30)},50,${100 + (Math.sin(Date.now() / 1000 + 1) * 30)},100,${100 + (Math.sin(Date.now() / 1000 + 2) * 30)},150,${100 + (Math.sin(Date.now() / 1000 + 3) * 30)},200,${100 + (Math.sin(Date.now() / 1000 + 4) * 30)},250,${100 + (Math.sin(Date.now() / 1000 + 5) * 30)},300,${100 + (Math.sin(Date.now() / 1000 + 6) * 30)},350,${100 + (Math.sin(Date.now() / 1000 + 7) * 30)},400,${100 + (Math.sin(Date.now() / 1000 + 8) * 30)}`}
-                          fill="none"
-                          stroke="#3b82f6"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                      <p className={`text-xs text-center mt-2 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Real-time price movement (15-min chart)</p>
-                    </div>
+                    <h3 className={`text-lg font-bold mb-4 uppercase tracking-wider ${isDark ? 'text-white' : 'text-black'}`}>Price Chart (5-min)</h3>
+                    {chartData.length > 0 && <CandlestickChart isDark={isDark} data={chartData} />}
                   </Card>
                 </div>
 
@@ -483,7 +503,7 @@ export default function BotTrading() {
             </div>
           )}
 
-          {/* Live Trade Feed */}
+          {/* Live Trade Feed with Wins/Losses */}
           {bots.length > 0 && (
             <div className="mb-8">
               <h2 className={`text-2xl font-black mb-6 uppercase tracking-wider ${isDark ? 'text-white' : 'text-black'}`}>Live Trade Feed</h2>
@@ -493,23 +513,25 @@ export default function BotTrading() {
                     <div key={trade.id} className={`p-4 rounded-lg border ${isDark ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-300'}`}>
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded ${trade.type === 'buy' ? (isDark ? 'bg-green-900/30' : 'bg-green-100/30') : (isDark ? 'bg-red-900/30' : 'bg-red-100/30')}`}>
+                          <div className={`p-2 rounded ${trade.type === 'buy' ? (isDark ? 'bg-blue-900/30' : 'bg-blue-100/30') : (isDark ? 'bg-purple-900/30' : 'bg-purple-100/30')}`}>
                             {trade.type === 'buy' ? (
-                              <ChevronUp size={20} className="text-green-500" />
+                              <ChevronUp size={20} className="text-blue-500" />
                             ) : (
-                              <ChevronDown size={20} className="text-red-500" />
+                              <ChevronDown size={20} className="text-purple-500" />
                             )}
                           </div>
                           <div>
-                            <p className={`font-bold text-sm uppercase ${trade.type === 'buy' ? 'text-green-500' : 'text-red-500'}`}>{trade.type}</p>
+                            <p className={`font-bold text-sm uppercase ${trade.type === 'buy' ? 'text-blue-500' : 'text-purple-500'}`}>{trade.type}</p>
                             <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{trade.timestamp}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className={`font-bold text-sm ${isDark ? 'text-white' : 'text-black'}`}>${trade.price.toFixed(2)}</p>
                           <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{trade.amount.toFixed(4)} BTC</p>
-                          {trade.profit && (
-                            <p className="text-xs text-green-500 font-bold mt-1">+${trade.profit.toFixed(2)}</p>
+                          {trade.profit !== undefined && (
+                            <p className={`text-xs font-bold mt-1 ${trade.isWin ? 'text-green-500' : 'text-red-500'}`}>
+                              {trade.isWin ? '+' : ''}{trade.profit.toFixed(2)} USD
+                            </p>
                           )}
                         </div>
                       </div>
@@ -592,13 +614,13 @@ export default function BotTrading() {
                         </div>
 
                         <div className="grid grid-cols-2 gap-3">
-                          <div>
-                            <p className={`text-xs uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Total Trades</p>
-                            <p className={`text-xl font-black mt-1 ${isDark ? 'text-white' : 'text-black'}`}>{bot.totalTrades}</p>
+                          <div className={`p-3 rounded-lg ${isDark ? 'bg-green-900/20 border border-green-800' : 'bg-green-100/30 border border-green-300'}`}>
+                            <p className={`text-xs uppercase font-bold ${isDark ? 'text-green-400' : 'text-green-700'}`}>Wins</p>
+                            <p className={`text-lg font-black mt-1 text-green-500`}>{bot.wins}</p>
                           </div>
-                          <div>
-                            <p className={`text-xs uppercase font-bold ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Fee/Month</p>
-                            <p className={`text-xl font-black mt-1 ${isDark ? 'text-white' : 'text-black'}`}>${bot.subscriptionFee}</p>
+                          <div className={`p-3 rounded-lg ${isDark ? 'bg-red-900/20 border border-red-800' : 'bg-red-100/30 border border-red-300'}`}>
+                            <p className={`text-xs uppercase font-bold ${isDark ? 'text-red-400' : 'text-red-700'}`}>Losses</p>
+                            <p className={`text-lg font-black mt-1 text-red-500`}>{bot.losses}</p>
                           </div>
                         </div>
                       </div>
