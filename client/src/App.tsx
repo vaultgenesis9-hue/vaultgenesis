@@ -11,8 +11,8 @@ import Staking from "./pages/Staking";
 import Wallet from "./pages/Wallet";
 import BotTrading from "./pages/BotTrading";
 import Admin from "./pages/Admin";
-
 function Router() {
+  // make sure to consider if you need authentication for certain routes
   return (
     <Switch>
       <Route path={"/"} component={Home} />
