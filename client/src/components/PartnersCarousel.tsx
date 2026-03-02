@@ -6,7 +6,7 @@ const partners = [
   { name: 'Coinbase', logo: '/coinbase.svg' },
 ];
 
-// Duplicate enough times for a seamless loop
+// Duplicate for seamless loop
 const loopedPartners = [...partners, ...partners, ...partners, ...partners];
 
 export default function PartnersCarousel() {
@@ -14,38 +14,36 @@ export default function PartnersCarousel() {
   const isDark = theme === 'dark';
 
   return (
-    <div className="w-full py-2 sm:py-4">
-      <div className="text-center mb-3 sm:mb-4">
-        <p className={`text-xs sm:text-sm uppercase tracking-wider ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-          Trusted Partners
-        </p>
-      </div>
+    <div className="w-full py-2 sm:py-4 flex flex-col items-center">
+      <p className={`text-xs sm:text-sm uppercase tracking-wider mb-3 sm:mb-4 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+        Trusted Partners
+      </p>
 
-      {/* Carousel Container */}
-      <div className="relative overflow-hidden">
-        {/* Gradient fade overlays */}
-        <div className={`absolute left-0 top-0 bottom-0 w-12 sm:w-24 z-10 pointer-events-none ${
+      {/* Centered, width-constrained container */}
+      <div className="relative w-full max-w-lg overflow-hidden">
+        {/* Gradient fade on left & right edges */}
+        <div className={`absolute left-0 top-0 bottom-0 w-10 z-10 pointer-events-none ${
           isDark
             ? 'bg-gradient-to-r from-black to-transparent'
             : 'bg-gradient-to-r from-[#fafaf8] to-transparent'
-        }`}></div>
-        <div className={`absolute right-0 top-0 bottom-0 w-12 sm:w-24 z-10 pointer-events-none ${
+        }`} />
+        <div className={`absolute right-0 top-0 bottom-0 w-10 z-10 pointer-events-none ${
           isDark
             ? 'bg-gradient-to-l from-black to-transparent'
             : 'bg-gradient-to-l from-[#fafaf8] to-transparent'
-        }`}></div>
+        }`} />
 
-        {/* Scrolling track — pure CSS animation */}
+        {/* Scrolling track — pure CSS */}
         <div className="flex carousel-track">
           {loopedPartners.map((partner, index) => (
             <div
               key={`${partner.name}-${index}`}
-              className="flex-shrink-0 flex items-center justify-center px-8 sm:px-12 h-10 sm:h-12"
+              className="flex-shrink-0 flex items-center justify-center px-6 h-10"
             >
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className={`h-5 sm:h-7 w-auto object-contain ${
+                className={`h-5 w-auto object-contain ${
                   isDark ? 'brightness-0 invert' : 'brightness-0'
                 }`}
               />
