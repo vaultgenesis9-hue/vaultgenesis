@@ -370,3 +370,20 @@
 .shatter-text {
   animation: shatter 2.5s ease-out forwards;
 }
+
+/* ── Partners Carousel ── */
+@keyframes carousel-scroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.carousel-track {
+  /* width: 200% so the duplicated set fills the track */
+  width: max-content;
+  animation: carousel-scroll 20s linear infinite;
+  will-change: transform;
+}
+
+.carousel-track:hover {
+  animation-play-state: paused;
+}

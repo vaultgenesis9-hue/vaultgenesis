@@ -19,27 +19,8 @@ export default function HeroSection() {
 
   return (
     <div className={`relative w-full min-h-screen overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
-      {/* Video Background */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute inset-0 w-full h-full object-cover"
-        style={{ 
-          opacity: isDark ? 0.45 : 0.35, 
-          zIndex: 0,
-          filter: isDark ? 'none' : 'invert(1)'
-        }}
-      >
-        <source src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663061635487/micBBcZJcXvWqKAX.mp4" type="video/mp4" />
-      </video>
-
-      {/* Background overlay - semi-transparent so video shows through */}
-      <div className={`absolute inset-0`} style={{ 
-        background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(250,250,248,0.65)',
-        zIndex: 1
-      }}></div>
+      {/* Solid background */}
+      <div className={`absolute inset-0`} style={{ zIndex: 1 }}></div>
       
       {/* Radial gradient glow effects - extending into navbar */}
       <div className="absolute rounded-full animate-float-glow-1" style={{
