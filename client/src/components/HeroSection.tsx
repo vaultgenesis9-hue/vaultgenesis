@@ -26,14 +26,18 @@ export default function HeroSection() {
         muted
         playsInline
         className="absolute inset-0 w-full h-full object-cover"
-        style={{ opacity: isDark ? 0.18 : 0.08, zIndex: 0 }}
+        style={{ 
+          opacity: isDark ? 0.45 : 0.35, 
+          zIndex: 0,
+          filter: isDark ? 'none' : 'invert(1)'
+        }}
       >
         <source src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663061635487/micBBcZJcXvWqKAX.mp4" type="video/mp4" />
       </video>
 
       {/* Background overlay - semi-transparent so video shows through */}
       <div className={`absolute inset-0`} style={{ 
-        background: isDark ? 'rgba(0,0,0,0.75)' : 'rgba(250,250,248,0.82)',
+        background: isDark ? 'rgba(0,0,0,0.55)' : 'rgba(250,250,248,0.65)',
         zIndex: 1
       }}></div>
       
