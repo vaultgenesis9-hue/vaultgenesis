@@ -2,11 +2,18 @@ import PartnersCarousel from './PartnersCarousel';
 import ScrollIndicator from './ScrollIndicator';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
+import WalletModal from './WalletModal';
 
 export default function HeroSection() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isAnimating, setIsAnimating] = useState(true);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
+
+  const handleWalletConnect = (address: string, _wallet: string) => {
+    setConnectedAddress(address);
+  };
 
   useEffect(() => {
     // Animation completes after 2.5 seconds
@@ -80,12 +87,14 @@ export default function HeroSection() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-1 mb-8">
-          <button className={`px-8 py-3 font-bold rounded-full uppercase text-sm border-2 transition-all duration-300 ${
-            isDark 
-              ? 'bg-white text-black border-white hover:bg-transparent hover:text-white'
-              : 'bg-black text-white border-black hover:bg-transparent hover:text-black'
-          }`}>
-            CONNECT WALLET
+          <button
+            onClick={() => setWalletModalOpen(true)}
+            className={`px-8 py-3 font-bold rounded-full uppercase text-sm border-2 transition-all duration-300 ${
+              isDark 
+                ? 'bg-white text-black border-white hover:bg-transparent hover:text-white'
+                : 'bg-black text-white border-black hover:bg-transparent hover:text-black'
+            }`}>
+            {connectedAddress ? `${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)}` : 'CONNECT WALLET'}
           </button>
         </div>
 
@@ -111,6 +120,12 @@ export default function HeroSection() {
         {/* Scroll Indicator */}
         <ScrollIndicator />
       </div>
+
+      <WalletModal
+        isOpen={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        onConnect={handleWalletConnect}
+      />
     </div>
   );
 }

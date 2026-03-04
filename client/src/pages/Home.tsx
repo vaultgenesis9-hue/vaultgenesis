@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
+import HowItWorks from "@/components/HowItWorks";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Home() {
@@ -9,9 +10,10 @@ export default function Home() {
   const isDark = theme === 'dark';
 
   return (
-    <div className={`h-screen overflow-hidden flex flex-col ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
+    <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
       <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <HeroSection />
+      <HowItWorks />
     </div>
   );
 }
