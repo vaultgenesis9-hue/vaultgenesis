@@ -238,7 +238,7 @@ export default function Presale() {
                 <Button
                   onClick={handleBuy}
                   disabled={isBuying}
-                  className={`w-full rounded-xl py-4 font-black text-sm uppercase tracking-wider ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
+                  className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
                 >
                   {isBuying ? "Processing..." : walletConnected ? "Buy VG Tokens" : "Connect Wallet to Buy"}
                 </Button>

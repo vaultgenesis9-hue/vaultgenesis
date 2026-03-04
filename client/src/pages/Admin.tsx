@@ -142,7 +142,7 @@ export default function Admin() {
           <div className={`flex gap-1 p-1 rounded-xl mb-8 w-fit ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
             {TABS.map(tab => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab.id
+                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${activeTab === tab.id
                   ? isDark ? 'bg-white text-black' : 'bg-black text-white'
                   : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}>
                 {tab.icon} <span className="hidden sm:inline">{tab.label}</span>

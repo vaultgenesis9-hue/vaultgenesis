@@ -89,7 +89,7 @@ export default function HeroSection() {
         <div className="flex flex-col sm:flex-row gap-1 mb-8">
           <button
             onClick={() => setWalletModalOpen(true)}
-            className={`px-8 py-3 font-bold rounded-full uppercase text-sm border-2 transition-all duration-300 ${
+            className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
               isDark 
                 ? 'bg-white text-black border-white hover:bg-transparent hover:text-white'
                 : 'bg-black text-white border-black hover:bg-transparent hover:text-black'

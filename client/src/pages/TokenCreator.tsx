@@ -163,7 +163,7 @@ export default function TokenCreator() {
                 </div>
               </div>
 
-              <Button onClick={resetForm} className={`w-full rounded-xl py-3 font-bold text-sm ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}>
+              <Button onClick={resetForm} className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}>
                 Create Another Token
               </Button>
             </div>
@@ -313,7 +313,7 @@ export default function TokenCreator() {
                     <Button
                       onClick={handleDeploy}
                       disabled={isDeploying}
-                      className={`w-full rounded-xl py-4 font-black text-sm uppercase tracking-wider ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
+                      className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
                     >
                       {isDeploying ? (
                         <span className="flex items-center gap-2"><span className="animate-spin">⟳</span> Deploying...</span>
@@ -328,7 +328,7 @@ export default function TokenCreator() {
                     onClick={prevStep}
                     disabled={currentStep === 0}
                     variant="outline"
-                    className={`flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold ${
+                    className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide border ${
                       isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5'
                     } disabled:opacity-30`}
                   >
@@ -337,7 +337,7 @@ export default function TokenCreator() {
                   {currentStep < STEPS.length - 1 && (
                     <Button
                       onClick={nextStep}
-                      className={`flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
+                      className={`inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
                     >
                       Next <ChevronRight className="w-4 h-4" />
                     </Button>

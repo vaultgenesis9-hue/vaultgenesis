@@ -104,7 +104,7 @@ export default function HowItWorks() {
           <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Ready to start your crypto journey?
           </p>
-          <button className={`px-10 py-3 font-black rounded-full uppercase text-sm border-2 transition-all duration-300 ${
+          <button className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
             isDark
               ? 'bg-white text-black border-white hover:bg-transparent hover:text-white'
               : 'bg-black text-white border-black hover:bg-transparent hover:text-black'

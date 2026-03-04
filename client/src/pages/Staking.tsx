@@ -146,7 +146,7 @@ export default function Staking() {
               <div className="flex gap-2 mb-5">
                 {TOKENS.map(t => (
                   <button key={t.symbol} onClick={() => setSelectedToken(t.symbol)}
-                    className={`flex-1 rounded-xl py-2 text-sm font-bold transition-all ${selectedToken === t.symbol
+                    className={`flex-1 rounded-xl py-2 text-xs font-semibold uppercase tracking-wide transition-all ${selectedToken === t.symbol
                       ? isDark ? 'bg-white text-black' : 'bg-black text-white'
                       : isDark ? 'bg-white/10 text-gray-400 hover:bg-white/20' : 'bg-black/10 text-gray-600 hover:bg-black/20'}`}>
                     {t.symbol}
@@ -176,7 +176,7 @@ export default function Staking() {
                     </>
                   )}
                 </div>
-                <Button onClick={handleStake} disabled={isStaking} className={`w-full rounded-xl py-4 font-black text-sm uppercase tracking-wider ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}>
+                <Button onClick={handleStake} disabled={isStaking} className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}>
                   {isStaking ? "Staking..." : `Stake ${selectedToken}`}
                 </Button>
               </div>

@@ -58,7 +58,7 @@ export default function CandlestickChart({ isDark, data }: CandlestickChartProps
 
   const options: ChartOptions<'line'> = {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         display: true,
@@ -98,8 +98,8 @@ export default function CandlestickChart({ isDark, data }: CandlestickChartProps
   };
 
   return (
-    <div className="w-full h-96">
-      <Line ref={chartRef} data={chartData} options={options} />
+    <div className="w-full h-full" style={{ minHeight: '200px', position: 'relative' }}>
+      <Line ref={chartRef} data={chartData} options={options} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 }

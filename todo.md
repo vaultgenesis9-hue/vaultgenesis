@@ -63,3 +63,11 @@
 - [ ] Real presale contribution processing
 - [ ] Real staking contract integration
 - [ ] Real bot trading API integration
+
+## Button Standardization & Responsiveness
+- [x] Audit Bot Trading page layout and button sizes
+- [x] Define global button size standard (py-2 px-4 text-xs font-semibold uppercase tracking-wide)
+- [x] Redesign Bot Trading page with consistent, compact buttons
+- [x] Standardize button sizes on Token Creator, Presale, Staking, Admin, Wallet pages
+- [x] Verify mobile responsiveness on Bot Trading page (chart fills full width with grid-cols-1 on mobile)
+- [x] Standardize buttons in Navbar, HeroSection, HowItWorks, WalletModal components

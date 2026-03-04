@@ -70,7 +70,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
                   navigate(link.href);
                   setMobileMenuOpen(false);
                 }}
-                className={`text-left font-bold transition uppercase text-sm py-2 ${theme === "dark" ? "text-white hover:text-gray-300" : "text-black hover:text-gray-600"}`}
+                className={`text-left font-semibold transition uppercase text-xs tracking-wider py-2 ${theme === "dark" ? "text-white hover:text-gray-300" : "text-black hover:text-gray-600"}`}
               >
                 {link.label}
               </button>

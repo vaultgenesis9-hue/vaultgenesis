@@ -135,7 +135,7 @@ export default function WalletModal({ isOpen, onClose, onConnect }: WalletModalP
                 </div>
               </div>
 
-              <button onClick={handleDisconnect} className={`w-full py-3 rounded-xl font-bold text-sm uppercase tracking-wider transition-all border ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5'}`}>
+              <button onClick={handleDisconnect} className={`w-full py-2 px-4 rounded-xl font-semibold text-xs uppercase tracking-wide transition-all border ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5'}`}>
                 Disconnect
               </button>
             </div>

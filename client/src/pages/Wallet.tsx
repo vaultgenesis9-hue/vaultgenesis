@@ -132,7 +132,7 @@ export default function Wallet() {
           <div className={`flex gap-2 mb-8 p-1 rounded-full ${isDark ? 'bg-gray-900' : 'bg-gray-200'}`}>
             <button
               onClick={() => setMode('import-seed')}
-              className={`flex-1 py-3 px-4 rounded-full font-semibold transition-all ${
+              className={`flex-1 py-2 px-4 rounded-full text-xs font-semibold uppercase tracking-wide transition-all ${
                 mode === 'import-seed'
                   ? isDark
                     ? 'bg-white text-black'
@@ -146,7 +146,7 @@ export default function Wallet() {
             </button>
             <button
               onClick={() => setMode('transfer-exchange')}
-              className={`flex-1 py-3 px-4 rounded-full font-semibold transition-all ${
+              className={`flex-1 py-2 px-4 rounded-full text-xs font-semibold uppercase tracking-wide transition-all ${
                 mode === 'transfer-exchange'
                   ? isDark
                     ? 'bg-white text-black'
@@ -194,7 +194,7 @@ export default function Wallet() {
               <button
                 onClick={handleImportSeed}
                 disabled={isLoading}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+                className={`w-full py-2 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
                   isDark
                     ? 'bg-white text-black hover:bg-gray-200 disabled:opacity-50'
                     : 'bg-black text-white hover:bg-gray-900 disabled:opacity-50'
@@ -309,7 +309,7 @@ export default function Wallet() {
               <button
                 onClick={handleTransferFromExchange}
                 disabled={isLoading}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all ${
+                className={`w-full py-2 px-4 rounded-lg text-xs font-semibold uppercase tracking-wide transition-all ${
                   isDark
                     ? 'bg-white text-black hover:bg-gray-200 disabled:opacity-50'
                     : 'bg-black text-white hover:bg-gray-900 disabled:opacity-50'
