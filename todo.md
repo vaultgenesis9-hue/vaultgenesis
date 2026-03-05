@@ -71,3 +71,15 @@
 - [x] Standardize button sizes on Token Creator, Presale, Staking, Admin, Wallet pages
 - [x] Verify mobile responsiveness on Bot Trading page (chart fills full width with grid-cols-1 on mobile)
 - [x] Standardize buttons in Navbar, HeroSection, HowItWorks, WalletModal components
+
+## Admin Page — Full Management Hub
+- [x] Overview tab: add platform health chart (7-day volume bar chart), presale progress card, top tokens leaderboard
+- [x] Users tab: add pagination, joined date column, export CSV button, user detail modal (full profile + trade history)
+- [x] Transactions tab: add search by wallet/token, date range filter, export CSV, transaction detail modal
+- [x] Tokens tab: add search, approve/reject pending tokens, suspend deployed tokens, token detail modal
+- [x] New Presale tab: manage presale settings (start/end date, hard cap, tier prices), pause/resume presale
+- [x] New Staking tab: manage staking pools (APY rates per token, enable/disable pool, view all positions)
+- [x] New Bots tab: view all active bots across users, force-stop a bot, bot performance stats
+- [x] New Settings tab: platform fee %, maintenance mode toggle, announcement banner text
+- [x] Sidebar navigation replacing top tab bar for better scalability
+- [x] Responsive mobile layout for admin sidebar (collapsible drawer)
