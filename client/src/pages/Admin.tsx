@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -9,13 +10,13 @@ import {
   LayoutDashboard, ArrowLeftRight, Rocket, Layers, Bot, Settings,
   ChevronRight, X, Eye, EyeOff, Download, RefreshCw, Pause, Play,
   AlertTriangle, BarChart3, Percent, Bell, ToggleLeft, ToggleRight,
-  Menu, ChevronLeft, Edit2, Trash2, Plus, Activity, Clock, Filter,
+  Menu, ChevronLeft, Edit2, Trash2, Plus, Activity, Clock, Filter, Key, Copy, RotateCcw,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "settings";
+type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "settings";
 
 interface UserRow {
   id: number; name: string; wallet: string; email: string;
@@ -107,6 +108,7 @@ const SIDEBAR_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: nu
   { id: "presale", label: "Presale", icon: <Rocket className="w-4 h-4" /> },
   { id: "staking", label: "Staking Pools", icon: <Layers className="w-4 h-4" /> },
   { id: "bots", label: "Bots", icon: <Bot className="w-4 h-4" /> },
+  { id: "api-tokens", label: "API Tokens", icon: <Key className="w-4 h-4" /> },
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -997,6 +999,11 @@ export default function Admin() {
             </div>
           )}
 
+          {/* ── API TOKENS ── */}
+          {activeTab === "api-tokens" && (
+            <ApiTokensTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
+          )}
+
           {/* ── SETTINGS ── */}
           {activeTab === "settings" && (
             <div className="space-y-4">
@@ -1083,6 +1090,220 @@ export default function Admin() {
           )}
 
         </main>
+      </div>
+    </div>
+  );
+}
+
+// ─── API Tokens Tab ───────────────────────────────────────────────────────────
+
+interface ApiTokensTabProps {
+  isDark: boolean;
+  cardClass: string;
+  labelClass: string;
+  actionBtn: (variant: "ghost" | "red" | "green" | "yellow") => string;
+  inputClass: string;
+}
+
+function ApiTokensTab({ isDark, cardClass, labelClass, actionBtn, inputClass }: ApiTokensTabProps) {
+  const [search, setSearch] = useState("");
+  const [showRevoked, setShowRevoked] = useState(false);
+  const [visibleTokens, setVisibleTokens] = useState<Record<number, boolean>>({});
+
+  // Real tRPC queries
+  const { data: tokenRows, isLoading, refetch } = trpc.apiTokens.listAll.useQuery();
+  const generateMut = trpc.apiTokens.generateForUser.useMutation({
+    onSuccess: () => { toast.success("New token generated"); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const revokeMut = trpc.apiTokens.revoke.useMutation({
+    onSuccess: () => { toast.success("Token revoked"); refetch(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const rows = tokenRows ?? [];
+  const filtered = rows.filter(r => {
+    if (!showRevoked && r.isRevoked) return false;
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      r.userName?.toLowerCase().includes(q) ||
+      r.userEmail?.toLowerCase().includes(q) ||
+      r.walletAddress?.toLowerCase().includes(q) ||
+      r.token.toLowerCase().includes(q)
+    );
+  });
+
+  const maskToken = (token: string) =>
+    token.slice(0, 10) + "••••••••••••••••••••••••••••••••" + token.slice(-6);
+
+  const copyToken = (token: string) => {
+    navigator.clipboard.writeText(token);
+    toast.success("Token copied to clipboard");
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>API Tokens</h1>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>View and manage user access tokens</p>
+        </div>
+        <div className="flex gap-2 items-center">
+          <label className={`flex items-center gap-2 text-xs cursor-pointer ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            <input
+              type="checkbox"
+              checked={showRevoked}
+              onChange={e => setShowRevoked(e.target.checked)}
+              className="rounded"
+            />
+            Show revoked
+          </label>
+          <Button onClick={() => refetch()} size="sm" className={actionBtn("ghost")}>
+            <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+          </Button>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Total Tokens", value: rows.length, color: isDark ? 'text-white' : 'text-black' },
+          { label: "Active", value: rows.filter(r => !r.isRevoked).length, color: "text-green-400" },
+          { label: "Revoked", value: rows.filter(r => r.isRevoked).length, color: "text-red-400" },
+        ].map(s => (
+          <div key={s.label} className={`${cardClass} p-4 text-center`}>
+            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+            <p className={`text-xs mt-1 uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className={`${cardClass} p-5`}>
+        <div className="relative mb-4">
+          <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
+          <input
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search by user, email, wallet, or token..."
+            className={`${inputClass} pl-9`}
+          />
+        </div>
+
+        {isLoading ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+            Loading tokens...
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Key className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            {rows.length === 0
+              ? "No API tokens found. Tokens are generated when users log in or request one."
+              : "No tokens match your search."}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+                  {["User", "Token", "Label", "Status", "Created", "Last Used", "Actions"].map(h => (
+                    <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map(row => (
+                  <tr key={row.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'} ${row.isRevoked ? 'opacity-50' : ''}`}>
+                    <td className="py-3 pr-3 min-w-[140px]">
+                      <p className={`font-bold text-xs ${isDark ? 'text-white' : 'text-black'}`}>{row.userName ?? "Unknown"}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{row.userEmail ?? "—"}</p>
+                      {row.walletAddress && (
+                        <p className={`font-mono text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                          {row.walletAddress.slice(0, 8)}...{row.walletAddress.slice(-4)}
+                        </p>
+                      )}
+                    </td>
+                    <td className="py-3 pr-3 min-w-[200px]">
+                      <div className="flex items-center gap-1">
+                        <span className={`font-mono text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                          {visibleTokens[row.id] ? row.token : maskToken(row.token)}
+                        </span>
+                        <button
+                          onClick={() => setVisibleTokens(v => ({ ...v, [row.id]: !v[row.id] }))}
+                          className={`ml-1 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                          title={visibleTokens[row.id] ? "Hide" : "Show"}
+                        >
+                          {visibleTokens[row.id] ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                        </button>
+                        <button
+                          onClick={() => copyToken(row.token)}
+                          className={`${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                          title="Copy token"
+                        >
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{row.label}</td>
+                    <td className="py-3 pr-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                        row.isRevoked
+                          ? 'bg-red-900/30 text-red-400 border border-red-700/30'
+                          : 'bg-green-900/30 text-green-400 border border-green-700/30'
+                      }`}>
+                        {row.isRevoked ? "Revoked" : "Active"}
+                      </span>
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {new Date(row.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {row.lastUsedAt ? new Date(row.lastUsedAt).toLocaleDateString() : "Never"}
+                    </td>
+                    <td className="py-3">
+                      <div className="flex gap-1">
+                        <Button
+                          onClick={() => generateMut.mutate({ userId: row.userId, label: row.label })}
+                          size="sm"
+                          className={actionBtn("ghost")}
+                          title="Regenerate token"
+                          disabled={generateMut.isPending}
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                        </Button>
+                        {!row.isRevoked && (
+                          <Button
+                            onClick={() => revokeMut.mutate({ tokenId: row.id })}
+                            size="sm"
+                            className={actionBtn("red")}
+                            title="Revoke token"
+                            disabled={revokeMut.isPending}
+                          >
+                            <Ban className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Info box */}
+      <div className={`flex items-start gap-3 px-4 py-3 rounded-xl border ${isDark ? 'border-blue-700/30 bg-blue-900/10' : 'border-blue-300 bg-blue-50'}`}>
+        <Key className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDark ? 'text-blue-400' : 'text-blue-600'}`} />
+        <div>
+          <p className={`text-xs font-bold ${isDark ? 'text-blue-400' : 'text-blue-700'}`}>About API Tokens</p>
+          <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+            Each user has one active API token at a time. Tokens are generated automatically when a user first authenticates.
+            Use <strong>Regenerate</strong> to issue a new token (this invalidates the old one), or <strong>Revoke</strong> to permanently disable access.
+            Tokens are prefixed with <code className="font-mono">vg_</code> and are 68 characters long.
+          </p>
+        </div>
       </div>
     </div>
   );

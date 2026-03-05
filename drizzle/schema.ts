@@ -103,3 +103,18 @@ export const botTrades = mysqlTable("botTrades", {
 
 export type BotTrade = typeof botTrades.$inferSelect;
 export type InsertBotTrade = typeof botTrades.$inferInsert;
+
+// API access tokens per user
+export const apiTokens = mysqlTable("apiTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  label: varchar("label", { length: 64 }).default("Default").notNull(),
+  isRevoked: int("isRevoked").default(0).notNull(), // 0 = active, 1 = revoked
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastUsedAt: timestamp("lastUsedAt"),
+  revokedAt: timestamp("revokedAt"),
+});
+
+export type ApiToken = typeof apiTokens.$inferSelect;
+export type InsertApiToken = typeof apiTokens.$inferInsert;

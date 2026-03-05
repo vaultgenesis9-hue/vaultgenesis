@@ -15,6 +15,13 @@
       "when": 1772622612325,
       "tag": "0001_brainy_revanche",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772751282735,
+      "tag": "0002_strong_newton_destine",
+      "breakpoints": true
     }
   ]
 }

@@ -83,3 +83,10 @@
 - [x] New Settings tab: platform fee %, maintenance mode toggle, announcement banner text
 - [x] Sidebar navigation replacing top tab bar for better scalability
 - [x] Responsive mobile layout for admin sidebar (collapsible drawer)
+
+## API Token Management
+- [x] Add api_tokens table to drizzle schema (id, userId, token, label, createdAt, lastUsedAt, revokedAt)
+- [x] Push DB migration
+- [x] Add tRPC procedures: generateToken, listTokens (admin), revokeToken, getUserToken
+- [x] Add API Tokens tab in Admin panel: table of all users + their tokens, copy token, revoke, regenerate
+- [x] Empty state shown when no tokens exist yet (tokens auto-generate on user login)
