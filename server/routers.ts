@@ -15,6 +15,11 @@ import {
   listAdminAccounts,
   toggleAdminActive,
   usernameExists,
+  listUsers,
+  countUsers,
+  setUserBanned,
+  setUserRole,
+  updateUserProfile,
 } from "./db";
 import { createHash } from "crypto";
 
@@ -30,6 +35,50 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+
+  users: router({
+    /** Admin: list all users */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return listUsers();
+    }),
+
+    /** Admin: count total users */
+    count: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return countUsers();
+    }),
+
+    /** Admin: ban or unban a user */
+    setBanned: protectedProcedure
+      .input(z.object({ userId: z.number(), banned: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await setUserBanned(input.userId, input.banned);
+        return { success: true };
+      }),
+
+    /** Admin: change user role */
+    setRole: protectedProcedure
+      .input(z.object({ userId: z.number(), role: z.enum(['user', 'admin']) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await setUserRole(input.userId, input.role);
+        return { success: true };
+      }),
+
+    /** User: update own profile (name, email, walletAddress) */
+    updateProfile: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1).max(64).optional(),
+        email: z.string().email().optional(),
+        walletAddress: z.string().max(64).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await updateUserProfile(ctx.user.id, input);
+        return { success: true };
+      }),
   }),
 
   adminAccounts: router({

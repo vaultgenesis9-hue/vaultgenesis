@@ -16,6 +16,7 @@ const navLinks = [
   { label: "STAKING", href: "/staking" },
   { label: "WALLET", href: "/wallet" },
   { label: "BOT TRADING", href: "/bot-trading" },
+  { label: "MY PROFILE", href: "/profile" },
 ];
 
 export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProps) {

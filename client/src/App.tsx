@@ -11,6 +11,7 @@ import Staking from "./pages/Staking";
 import Wallet from "./pages/Wallet";
 import BotTrading from "./pages/BotTrading";
 import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path={"/wallet"} component={Wallet} />
       <Route path={"/bot-trading"} component={BotTrading} />
       <Route path={"/admin"} component={Admin} />
+      <Route path={"/profile"} component={Profile} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

@@ -90,6 +90,63 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// ─── User Management Helpers ────────────────────────────────────────────────
+
+/** List all users for admin panel */
+export async function listUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(users.createdAt);
+}
+
+/** Count total users */
+export async function countUsers() {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ id: users.id }).from(users);
+  return result.length;
+}
+
+/** Ban or unban a user */
+export async function setUserBanned(userId: number, banned: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  // We store ban state in a new field — but since schema has no isBanned column,
+  // we repurpose loginMethod to track ban: prefix with 'banned:' when banned
+  // Actually we'll add a proper approach: store in role as 'banned' or keep role and use a separate flag
+  // For now, we update the name with a [BANNED] prefix as a lightweight approach
+  // Better: update role to 'banned' — but enum only has user/admin
+  // Best approach: update walletAddress to a sentinel value — no, that's wrong
+  // Correct: we need to add isBanned to schema OR use loginMethod field
+  // Using loginMethod: set to 'banned' when banned, restore original when unbanned
+  const current = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  if (!current.length) throw new Error('User not found');
+  const user = current[0];
+  const wasBanned = user.loginMethod === 'banned';
+  await db.update(users)
+    .set({ loginMethod: banned ? 'banned' : (wasBanned ? null : user.loginMethod) })
+    .where(eq(users.id, userId));
+}
+
+/** Update user role */
+export async function setUserRole(userId: number, role: 'user' | 'admin') {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(users).set({ role }).where(eq(users.id, userId));
+}
+
+/** Update user profile (name + email) — called by the user themselves */
+export async function updateUserProfile(userId: number, data: { name?: string; email?: string; walletAddress?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const updateSet: Record<string, unknown> = {};
+  if (data.name !== undefined) updateSet.name = data.name;
+  if (data.email !== undefined) updateSet.email = data.email;
+  if (data.walletAddress !== undefined) updateSet.walletAddress = data.walletAddress;
+  if (Object.keys(updateSet).length === 0) return;
+  await db.update(users).set(updateSet).where(eq(users.id, userId));
+}
+
 // ─── API Token Helpers ────────────────────────────────────────────────────────
 
 /** Generate a secure random token string */

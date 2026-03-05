@@ -124,10 +124,42 @@ export default function Admin() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
 
-  // Users state
+  // Users state — real DB data
   const [userSearch, setUserSearch] = useState("");
-  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
   const [selectedUser, setSelectedUser] = useState<UserRow | null>(null);
+  const { data: dbUsers, isLoading: usersLoading, refetch: refetchUsers } = trpc.users.list.useQuery();
+
+  const banMut = trpc.users.setBanned.useMutation({
+    onSuccess: (_, vars) => {
+      const name = dbUsers?.find(u => u.id === vars.userId)?.name ?? 'User';
+      toast.success(`${name} ${vars.banned ? 'banned' : 'unbanned'}`);
+      refetchUsers();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const roleMut = trpc.users.setRole.useMutation({
+    onSuccess: (_, vars) => {
+      const name = dbUsers?.find(u => u.id === vars.userId)?.name ?? 'User';
+      toast.success(`${name} is now ${vars.role}`);
+      refetchUsers();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  // Map DB users to UserRow shape for the UI
+  const users: UserRow[] = useMemo(() => (dbUsers ?? []).map(u => ({
+    id: u.id,
+    name: u.name ?? 'Unknown',
+    wallet: u.walletAddress ?? '—',
+    email: u.email ?? '—',
+    role: u.role as 'user' | 'admin',
+    joined: new Date(u.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    status: u.loginMethod === 'banned' ? 'banned' : 'active',
+    totalTrades: 0,
+    volume: '—',
+    lastActive: new Date(u.lastSignedIn).toLocaleDateString(),
+  })), [dbUsers]);
 
   // Transactions state
   const [txFilter, setTxFilter] = useState("all");
@@ -183,16 +215,14 @@ export default function Admin() {
 
   const handleBanUser = (id: number) => {
     const user = users.find(u => u.id === id);
-    const next = user?.status === "banned" ? "active" : "banned";
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, status: next } : u));
-    toast.success(`${user?.name} ${next === "banned" ? "banned" : "unbanned"}`);
+    const shouldBan = user?.status !== 'banned';
+    banMut.mutate({ userId: id, banned: shouldBan });
   };
 
   const handleRoleChange = (id: number) => {
     const user = users.find(u => u.id === id);
-    const next = user?.role === "admin" ? "user" : "admin";
-    setUsers(prev => prev.map(u => u.id === id ? { ...u, role: next } : u));
-    toast.success(`${user?.name} is now ${next}`);
+    const next: 'user' | 'admin' = user?.role === 'admin' ? 'user' : 'admin';
+    roleMut.mutate({ userId: id, role: next });
   };
 
   const handleTokenAction = (id: number, action: "approve" | "reject" | "suspend" | "restore") => {
@@ -501,11 +531,26 @@ export default function Admin() {
                   </div>
                 </div>
 
+                {usersLoading && (
+                  <div className={`text-center py-8 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <RefreshCw className="w-4 h-4 animate-spin mx-auto mb-2" />
+                    Loading users from database...
+                  </div>
+                )}
+
+                {!usersLoading && filteredUsers.length === 0 && (
+                  <div className={`text-center py-8 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                    <Users className="w-6 h-6 mx-auto mb-2 opacity-30" />
+                    No users found. Users appear here once they sign in.
+                  </div>
+                )}
+
+                {!usersLoading && filteredUsers.length > 0 && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                        {["User", "Wallet", "Role", "Volume", "Trades", "Last Active", "Status", "Actions"].map(h => (
+                        {["User", "Wallet", "Role", "Joined", "Last Active", "Status", "Actions"].map(h => (
                           <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
                         ))}
                       </tr>
@@ -521,8 +566,7 @@ export default function Admin() {
                           <td className="py-3 pr-3">
                             <span className={statusBadge(user.role === "admin" ? "completed" : "pending")}>{user.role}</span>
                           </td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{user.volume}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{user.totalTrades}</td>
+                          <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{user.joined}</td>
                           <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{user.lastActive}</td>
                           <td className="py-3 pr-3">
                             <span className={statusBadge(user.status)}>{user.status}</span>
@@ -545,6 +589,7 @@ export default function Admin() {
                     </tbody>
                   </table>
                 </div>
+                )}
               </div>
 
               {/* User Detail Modal */}

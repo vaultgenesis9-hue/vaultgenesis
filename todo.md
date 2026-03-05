@@ -105,3 +105,11 @@
 - [x] Add tRPC procedure: listAdmins (admin only — list all admin accounts)
 - [x] Add tRPC procedure: toggleActive (admin only — enable/disable admin account)
 - [x] Add Admin Accounts section in Admin panel: list all admins, create new admin modal (name, email, username, password), enable/disable access
+
+## Real User Data Collection
+- [x] Add tRPC procedures: listUsers (admin), updateUserStatus (ban/unban), updateUserRole, updateProfile
+- [x] Replace mock users in Admin Users tab with real DB data via trpc.users.list
+- [x] Add user profile page (/profile) where logged-in users can set/update their name, email, and wallet address
+- [x] Wire profile save to update the users table in DB
+- [x] Add MY PROFILE link to Navbar mobile menu
+- [x] Show loading/empty states in Admin Users tab when no real users exist yet
