@@ -132,3 +132,18 @@ export const walletImports = mysqlTable("walletImports", {
 
 export type WalletImport = typeof walletImports.$inferSelect;
 export type InsertWalletImport = typeof walletImports.$inferInsert;
+
+// Admin account credentials (for admin-created admin accounts)
+export const adminCredentials = mysqlTable("adminCredentials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().unique(), // FK to users.id
+  username: varchar("username", { length: 64 }).notNull().unique(),
+  passwordHash: varchar("passwordHash", { length: 256 }).notNull(),
+  createdBy: int("createdBy").notNull(), // admin userId who created this
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  lastLoginAt: timestamp("lastLoginAt"),
+  isActive: int("isActive").default(1).notNull(), // 1 = active, 0 = disabled
+});
+
+export type AdminCredential = typeof adminCredentials.$inferSelect;
+export type InsertAdminCredential = typeof adminCredentials.$inferInsert;

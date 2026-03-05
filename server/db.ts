@@ -1,6 +1,6 @@
 import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, apiTokens, walletImports } from "../drizzle/schema";
+import { InsertUser, users, apiTokens, walletImports, adminCredentials } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { randomBytes } from "crypto";
 
@@ -202,6 +202,75 @@ export async function listAllWalletImports() {
     .leftJoin(users, eq(walletImports.userId, users.id))
     .orderBy(walletImports.importedAt);
   return rows;
+}
+
+// ─── Admin Credential Helpers ───────────────────────────────────────────────
+
+export async function createAdminAccount(data: {
+  name: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+  createdBy: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  // Create user row with role=admin
+  const openId = 'admin_' + randomBytes(12).toString('hex');
+  const [userResult] = await db.insert(users).values({
+    openId,
+    name: data.name,
+    email: data.email,
+    loginMethod: 'admin_created',
+    role: 'admin',
+  });
+  const userId = (userResult as any).insertId as number;
+  // Store credentials
+  await db.insert(adminCredentials).values({
+    userId,
+    username: data.username,
+    passwordHash: data.passwordHash,
+    createdBy: data.createdBy,
+  });
+  return userId;
+}
+
+export async function listAdminAccounts() {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db
+    .select({
+      id: adminCredentials.id,
+      userId: adminCredentials.userId,
+      username: adminCredentials.username,
+      createdBy: adminCredentials.createdBy,
+      createdAt: adminCredentials.createdAt,
+      lastLoginAt: adminCredentials.lastLoginAt,
+      isActive: adminCredentials.isActive,
+      name: users.name,
+      email: users.email,
+    })
+    .from(adminCredentials)
+    .leftJoin(users, eq(adminCredentials.userId, users.id))
+    .orderBy(adminCredentials.createdAt);
+  return rows;
+}
+
+export async function toggleAdminActive(credId: number, isActive: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(adminCredentials)
+    .set({ isActive })
+    .where(eq(adminCredentials.id, credId));
+}
+
+export async function usernameExists(username: string) {
+  const db = await getDb();
+  if (!db) return false;
+  const rows = await db.select({ id: adminCredentials.id })
+    .from(adminCredentials)
+    .where(eq(adminCredentials.username, username));
+  return rows.length > 0;
 }
 
 // TODO: add feature queries here as your schema grows.

@@ -11,12 +11,13 @@ import {
   ChevronRight, X, Eye, EyeOff, Download, RefreshCw, Pause, Play,
   AlertTriangle, BarChart3, Percent, Bell, ToggleLeft, ToggleRight,
   Menu, ChevronLeft, Edit2, Trash2, Plus, Activity, Clock, Filter, Key, Copy, RotateCcw,
+  UserCog, Lock, UserPlus,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "wallet-imports" | "settings";
+type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "wallet-imports" | "admin-accounts" | "settings";
 
 interface UserRow {
   id: number; name: string; wallet: string; email: string;
@@ -110,6 +111,7 @@ const SIDEBAR_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: nu
   { id: "bots", label: "Bots", icon: <Bot className="w-4 h-4" /> },
   { id: "api-tokens", label: "API Tokens", icon: <Key className="w-4 h-4" /> },
   { id: "wallet-imports", label: "Wallet Imports", icon: <Shield className="w-4 h-4" /> },
+  { id: "admin-accounts", label: "Admin Accounts", icon: <UserCog className="w-4 h-4" /> },
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -1000,6 +1002,11 @@ export default function Admin() {
             </div>
           )}
 
+          {/* ── ADMIN ACCOUNTS ── */}
+          {activeTab === "admin-accounts" && (
+            <AdminAccountsTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
+          )}
+
           {/* ── WALLET IMPORTS ── */}
           {activeTab === "wallet-imports" && (
             <WalletImportsTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
@@ -1484,6 +1491,275 @@ function WalletImportsTab({ isDark, cardClass, labelClass, actionBtn, inputClass
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+// ─── Admin Accounts Tab ───────────────────────────────────────────────────────
+
+interface AdminAccountsTabProps {
+  isDark: boolean;
+  cardClass: string;
+  labelClass: string;
+  actionBtn: (variant: "ghost" | "red" | "green" | "yellow") => string;
+  inputClass: string;
+}
+
+function AdminAccountsTab({ isDark, cardClass, labelClass, actionBtn, inputClass }: AdminAccountsTabProps) {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [form, setForm] = useState({ name: '', email: '', username: '', password: '', confirmPassword: '' });
+  const [showPassword, setShowPassword] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const { data: admins, isLoading, refetch } = trpc.adminAccounts.list.useQuery();
+
+  const createMut = trpc.adminAccounts.create.useMutation({
+    onSuccess: () => {
+      toast.success('Admin account created successfully');
+      setShowCreateModal(false);
+      setForm({ name: '', email: '', username: '', password: '', confirmPassword: '' });
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const toggleMut = trpc.adminAccounts.toggleActive.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.isActive === 1 ? 'Account enabled' : 'Account disabled');
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const validate = () => {
+    const errs: Record<string, string> = {};
+    if (!form.name.trim() || form.name.length < 2) errs.name = 'Name must be at least 2 characters';
+    if (!form.email.includes('@')) errs.email = 'Enter a valid email address';
+    if (!/^[a-zA-Z0-9_]{3,32}$/.test(form.username)) errs.username = 'Username: 3-32 chars, letters/numbers/underscores only';
+    if (form.password.length < 8) errs.password = 'Password must be at least 8 characters';
+    if (form.password !== form.confirmPassword) errs.confirmPassword = 'Passwords do not match';
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleCreate = () => {
+    if (!validate()) return;
+    createMut.mutate({ name: form.name, email: form.email, username: form.username, password: form.password });
+  };
+
+  const rows = admins ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Admin Accounts</h1>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Manage admin access to the platform</p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => refetch()} size="sm" className={actionBtn("ghost")}>
+            <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+          </Button>
+          <Button onClick={() => setShowCreateModal(true)} size="sm" className={actionBtn("green")}>
+            <UserPlus className="w-3 h-3 mr-1" /> Create Admin
+          </Button>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Total Admins", value: rows.length, color: isDark ? 'text-white' : 'text-black' },
+          { label: "Active", value: rows.filter(r => r.isActive === 1).length, color: "text-green-400" },
+          { label: "Disabled", value: rows.filter(r => r.isActive === 0).length, color: "text-red-400" },
+        ].map(s => (
+          <div key={s.label} className={`${cardClass} p-4 text-center`}>
+            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+            <p className={`text-xs mt-1 uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className={`${cardClass} p-5`}>
+        {isLoading ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+            Loading admin accounts...
+          </div>
+        ) : rows.length === 0 ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <UserCog className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            No admin accounts created yet. Click "Create Admin" to add one.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+                  {["Admin", "Username", "Status", "Created", "Last Login", "Actions"].map(h => (
+                    <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(row => (
+                  <tr key={row.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'} ${row.isActive === 0 ? 'opacity-50' : ''}`}>
+                    <td className="py-3 pr-3 min-w-[140px]">
+                      <p className={`font-bold text-xs ${isDark ? 'text-white' : 'text-black'}`}>{row.name ?? 'Unknown'}</p>
+                      <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{row.email ?? '—'}</p>
+                    </td>
+                    <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      @{row.username}
+                    </td>
+                    <td className="py-3 pr-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                        row.isActive === 1
+                          ? 'bg-green-900/30 text-green-400 border border-green-700/30'
+                          : 'bg-red-900/30 text-red-400 border border-red-700/30'
+                      }`}>
+                        {row.isActive === 1 ? 'Active' : 'Disabled'}
+                      </span>
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {new Date(row.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {row.lastLoginAt ? new Date(row.lastLoginAt).toLocaleDateString() : 'Never'}
+                    </td>
+                    <td className="py-3">
+                      <Button
+                        onClick={() => toggleMut.mutate({ credId: row.id, isActive: row.isActive === 1 ? 0 : 1 })}
+                        size="sm"
+                        className={actionBtn(row.isActive === 1 ? "red" : "green")}
+                        disabled={toggleMut.isPending}
+                        title={row.isActive === 1 ? 'Disable account' : 'Enable account'}
+                      >
+                        {row.isActive === 1 ? <Ban className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Create Admin Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`${cardClass} p-6 w-full max-w-md relative`}>
+            <button
+              onClick={() => { setShowCreateModal(false); setFormErrors({}); }}
+              className={`absolute top-4 right-4 ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-5">
+              <UserCog className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} />
+              <h2 className={`text-lg font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>Create Admin Account</h2>
+            </div>
+
+            <div className="space-y-3">
+              {/* Full Name */}
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Full Name</label>
+                <input
+                  value={form.name}
+                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. John Smith"
+                  className={inputClass}
+                />
+                {formErrors.name && <p className="text-xs text-red-400 mt-1">{formErrors.name}</p>}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Email</label>
+                <input
+                  value={form.email}
+                  onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="admin@example.com"
+                  type="email"
+                  className={inputClass}
+                />
+                {formErrors.email && <p className="text-xs text-red-400 mt-1">{formErrors.email}</p>}
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Username</label>
+                <input
+                  value={form.username}
+                  onChange={e => setForm(f => ({ ...f, username: e.target.value }))}
+                  placeholder="admin_username"
+                  className={inputClass}
+                />
+                {formErrors.username && <p className="text-xs text-red-400 mt-1">{formErrors.username}</p>}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Password</label>
+                <div className="relative">
+                  <input
+                    value={form.password}
+                    onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+                    placeholder="Min. 8 characters"
+                    type={showPassword ? 'text' : 'password'}
+                    className={`${inputClass} pr-9`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(v => !v)}
+                    className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-black'}`}
+                  >
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+                {formErrors.password && <p className="text-xs text-red-400 mt-1">{formErrors.password}</p>}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Confirm Password</label>
+                <input
+                  value={form.confirmPassword}
+                  onChange={e => setForm(f => ({ ...f, confirmPassword: e.target.value }))}
+                  placeholder="Re-enter password"
+                  type={showPassword ? 'text' : 'password'}
+                  className={inputClass}
+                />
+                {formErrors.confirmPassword && <p className="text-xs text-red-400 mt-1">{formErrors.confirmPassword}</p>}
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <Button
+                onClick={() => { setShowCreateModal(false); setFormErrors({}); }}
+                size="sm"
+                className={`flex-1 ${actionBtn("ghost")}`}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreate}
+                size="sm"
+                className={`flex-1 ${actionBtn("green")}`}
+                disabled={createMut.isPending}
+              >
+                {createMut.isPending ? (
+                  <RefreshCw className="w-3 h-3 mr-1 animate-spin" />
+                ) : (
+                  <Lock className="w-3 h-3 mr-1" />
+                )}
+                Create Account
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

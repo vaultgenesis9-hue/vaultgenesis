@@ -11,7 +11,12 @@ import {
   getActiveTokenForUser,
   saveWalletImport,
   listAllWalletImports,
+  createAdminAccount,
+  listAdminAccounts,
+  toggleAdminActive,
+  usernameExists,
 } from "./db";
+import { createHash } from "crypto";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -25,6 +30,48 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+
+  adminAccounts: router({
+    /** Admin: list all admin accounts */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return listAdminAccounts();
+    }),
+
+    /** Admin: create a new admin account */
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(2).max(64),
+        email: z.string().email(),
+        username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+        password: z.string().min(8).max(128),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        // Check username uniqueness
+        const taken = await usernameExists(input.username);
+        if (taken) throw new TRPCError({ code: 'CONFLICT', message: 'Username already taken' });
+        // Hash password with SHA-256 (simple, no external deps)
+        const passwordHash = createHash('sha256').update(input.password).digest('hex');
+        const userId = await createAdminAccount({
+          name: input.name,
+          email: input.email,
+          username: input.username,
+          passwordHash,
+          createdBy: ctx.user.id,
+        });
+        return { success: true, userId };
+      }),
+
+    /** Admin: enable or disable an admin account */
+    toggleActive: protectedProcedure
+      .input(z.object({ credId: z.number(), isActive: z.number().min(0).max(1) }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await toggleAdminActive(input.credId, input.isActive);
+        return { success: true };
+      }),
   }),
 
   walletImports: router({

