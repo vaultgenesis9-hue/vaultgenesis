@@ -151,3 +151,7 @@
 ## Railway Deployment Fix
 - [ ] Fix RESEND_API_KEY crash - make Resend init lazy (only throw when actually used)
 - [ ] Fix OAUTH_SERVER_URL crash - make OAuth init graceful when env var missing
+
+## Remove Manus OAuth Dependency
+- [x] Make OAUTH_SERVER_URL, VITE_APP_ID, VITE_OAUTH_PORTAL_URL optional (no crash on startup)
+- [x] Fix getLoginUrl() to return '#' when OAuth env vars are missing (prevents Invalid URL crash)
