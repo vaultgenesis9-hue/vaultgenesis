@@ -3,7 +3,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
 import WalletModal from "@/components/WalletModal";
-import { Button } from "@/components/ui/button";
+import AuthModal from "@/components/AuthModal";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { User, Mail, Wallet, Save, CheckCircle, Loader2 } from "lucide-react";
@@ -21,6 +21,8 @@ export default function Profile() {
   const [saved, setSaved] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<"signin" | "signup">("signin");
 
   // Pre-fill form with existing data when user loads
   useEffect(() => {
@@ -76,31 +78,62 @@ export default function Profile() {
     );
   }
 
-  // Show connect wallet prompt if wallet is not connected
+  // Show access options if neither wallet nor session is active
   if (!isAuthenticated && !isConnected) {
     return (
       <div className={`min-h-screen ${bg} flex flex-col`}>
         <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className={`w-full max-w-sm rounded-2xl border p-8 text-center ${cardBg}`}>
-            <Wallet className={`w-10 h-10 mx-auto mb-4 ${isDark ? "text-gray-600" : "text-gray-300"}`} />
+            <div className="text-4xl mb-4">🔐</div>
             <h2 className={`text-xl font-black uppercase tracking-tighter mb-2 ${isDark ? "text-white" : "text-black"}`}>
-              Connect Your Wallet
+              Access Your Profile
             </h2>
             <p className={`text-xs mb-6 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
-              Connect your wallet to view and edit your profile.
+              Sign in with email or connect a crypto wallet to view and edit your profile.
             </p>
+
+            {/* Primary: Sign In with email */}
             <button
-              onClick={() => setWalletModalOpen(true)}
-              className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-center transition-all ${
+              onClick={() => { setAuthTab("signin"); setAuthModalOpen(true); }}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-center transition-all mb-3 ${
                 isDark ? "bg-white text-black hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
               }`}
             >
-              Connect Wallet
+              Sign In with Email
+            </button>
+
+            {/* Secondary: Create account */}
+            <button
+              onClick={() => { setAuthTab("signup"); setAuthModalOpen(true); }}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-center transition-all mb-5 border ${
+                isDark ? "border-white/20 text-white hover:bg-white/10" : "border-black/20 text-black hover:bg-black/10"
+              }`}
+            >
+              Create Free Account
+            </button>
+
+            {/* Divider */}
+            <div className={`flex items-center gap-3 mb-4 ${isDark ? "text-gray-600" : "text-gray-400"}`}>
+              <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-black/10"}`} />
+              <span className="text-xs">or</span>
+              <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-black/10"}`} />
+            </div>
+
+            {/* Wallet option */}
+            <button
+              onClick={() => setWalletModalOpen(true)}
+              className={`w-full py-2 rounded-xl text-xs font-semibold uppercase tracking-widest text-center transition-all ${
+                isDark ? "text-gray-400 hover:text-white" : "text-gray-500 hover:text-black"
+              }`}
+            >
+              <Wallet className="w-3 h-3 inline mr-1.5" />
+              Connect Crypto Wallet Instead
             </button>
           </div>
         </div>
         <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
+        <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} defaultTab={authTab} />
       </div>
     );
   }
@@ -179,21 +212,22 @@ export default function Profile() {
             <input
               value={walletAddress}
               onChange={e => setWalletAddress(e.target.value)}
-              placeholder="0x... (optional)"
+              placeholder="0x... (optional — add after importing)"
               className={`${inputClass} font-mono`}
               maxLength={64}
             />
             <p className={`text-xs ${isDark ? "text-gray-600" : "text-gray-400"}`}>
-              Your primary wallet address for transactions and support.
+              Your primary wallet address. You can import a wallet from the{" "}
+              <a href="/wallet" className={`underline ${isDark ? "text-gray-400" : "text-gray-600"}`}>Wallet page</a>.
             </p>
           </div>
 
           {/* Save Button */}
           <div className="pt-2">
-            <Button
+            <button
               onClick={handleSave}
               disabled={updateProfile.isPending || saved}
-              className={`w-full py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all ${
+              className={`w-full py-2.5 text-xs font-bold uppercase tracking-widest rounded-xl transition-all flex items-center justify-center gap-2 ${
                 saved
                   ? "bg-green-500 text-white"
                   : isDark
@@ -202,13 +236,13 @@ export default function Profile() {
               }`}
             >
               {updateProfile.isPending ? (
-                <><Loader2 className="w-3 h-3 mr-2 animate-spin" /> Saving...</>
+                <><Loader2 className="w-3 h-3 animate-spin" /> Saving...</>
               ) : saved ? (
-                <><CheckCircle className="w-3 h-3 mr-2" /> Saved</>
+                <><CheckCircle className="w-3 h-3" /> Saved</>
               ) : (
-                <><Save className="w-3 h-3 mr-2" /> Save Profile</>
+                <><Save className="w-3 h-3" /> Save Profile</>
               )}
-            </Button>
+            </button>
           </div>
         </div>
 

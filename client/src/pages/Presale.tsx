@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
 import WalletModal from "@/components/WalletModal";
+import AuthModal from "@/components/AuthModal";
+import { trpc } from "@/lib/trpc";
 import { Clock, TrendingUp, Users, DollarSign, CheckCircle } from "lucide-react";
 import { useAccount } from "wagmi";
 
@@ -69,6 +71,9 @@ export default function Presale() {
   const [selectedTier, setSelectedTier] = useState(1);
   const { isConnected: walletConnected, address: walletAddress } = useAccount();
   const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const { data: sessionUser } = trpc.auth.me.useQuery();
+  const isAuthenticated = walletConnected || (sessionUser != null);
   const [contributions, setContributions] = useState<Contribution[]>(MOCK_CONTRIBUTIONS);
   const [isBuying, setIsBuying] = useState(false);
   const timeLeft = useCountdown(PRESALE_END);
@@ -81,7 +86,11 @@ export default function Presale() {
   const tokensToReceive = amount ? Math.floor(Number(amount) / activeTier.price) : 0;
 
   const handleBuy = async () => {
-    if (!walletConnected) { setWalletModalOpen(true); return; }
+    if (!isAuthenticated) {
+      // Show a choice: wallet or email sign-in
+      setWalletModalOpen(true);
+      return;
+    }
     if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
     if (Number(amount) < activeTier.minBuy) { toast.error(`Minimum contribution is $${activeTier.minBuy}`); return; }
     if (Number(amount) > activeTier.maxBuy) { toast.error(`Maximum contribution is $${activeTier.maxBuy}`); return; }
@@ -243,7 +252,7 @@ export default function Presale() {
                   disabled={isBuying}
                   className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
                 >
-                  {isBuying ? "Processing..." : walletConnected ? "Buy VG Tokens" : "Connect Wallet to Buy"}
+                  {isBuying ? "Processing..." : isAuthenticated ? "Buy VG Tokens" : "Sign In or Connect Wallet"}
                 </Button>
 
                 <p className={`text-xs text-center ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
@@ -281,6 +290,7 @@ export default function Presale() {
         </div>
       </main>
       <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
+      <AuthModal isOpen={authModalOpen} onClose={() => setAuthModalOpen(false)} defaultTab="signin" />
     </div>
   );
 }

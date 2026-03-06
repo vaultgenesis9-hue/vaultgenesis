@@ -165,3 +165,16 @@
 - [x] Fix wallet icon button in navbar - should open Connect Wallet modal when clicked
 - [x] Fix Profile page auth flow - wallet-connected users should go straight to profile (name/email form), not see a Sign In gate
 - [x] Fix APY History chart on Staking page - bars render correctly (custom CSS bars, not Recharts)
+
+## Email/Password Auth Flow (Mobile-Friendly Sign Up)
+- [x] Add username and passwordHash columns to users table in drizzle schema
+- [x] Push DB migration
+- [x] Add tRPC procedure: auth.register (email + username + password → create user, set session cookie)
+- [x] Add tRPC procedure: auth.login (email/username + password → verify bcrypt hash, set session cookie)
+- [x] Build AuthModal component with Sign Up / Sign In tabs (email, username, password fields)
+- [x] Wire AuthModal into Navbar: show Sign In button when no wallet and no session
+- [x] Wire AuthModal into Profile page: show Sign In / Sign Up option alongside Connect Wallet
+- [x] Wire AuthModal into HeroSection: show SIGN IN / SIGN UP button alongside CONNECT WALLET
+- [x] Wire AuthModal into Presale buy button: open AuthModal if no wallet and no session
+- [x] Show logged-in username/avatar pill in Navbar when email session is active
+- [x] Add Sign Out option in Navbar mobile menu for session users

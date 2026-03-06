@@ -1,0 +1,358 @@
+import { useState } from "react";
+import { X, Eye, EyeOff, Loader2, User, Mail, Lock, AtSign } from "lucide-react";
+import { toast } from "sonner";
+import { useTheme } from "@/contexts/ThemeContext";
+import { trpc } from "@/lib/trpc";
+
+interface AuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  /** Which tab to open first */
+  defaultTab?: "signin" | "signup";
+  /** Called after successful sign in or sign up */
+  onSuccess?: () => void;
+}
+
+export default function AuthModal({ isOpen, onClose, defaultTab = "signin", onSuccess }: AuthModalProps) {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+  const [tab, setTab] = useState<"signin" | "signup">(defaultTab);
+
+  // Sign In state
+  const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [showSignInPwd, setShowSignInPwd] = useState(false);
+
+  // Sign Up state
+  const [signUpName, setSignUpName] = useState("");
+  const [signUpEmail, setSignUpEmail] = useState("");
+  const [signUpUsername, setSignUpUsername] = useState("");
+  const [signUpPassword, setSignUpPassword] = useState("");
+  const [signUpConfirm, setSignUpConfirm] = useState("");
+  const [showSignUpPwd, setShowSignUpPwd] = useState(false);
+
+  const utils = trpc.useUtils();
+
+  const loginMut = trpc.auth.login.useMutation({
+    onSuccess: () => {
+      toast.success("Welcome back!");
+      utils.auth.me.invalidate();
+      onClose();
+      onSuccess?.();
+      // Reload page so Navbar and all components re-read the session
+      setTimeout(() => window.location.reload(), 300);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Sign in failed");
+    },
+  });
+
+  const registerMut = trpc.auth.register.useMutation({
+    onSuccess: () => {
+      toast.success("Account created! Welcome to VaultGenesis.");
+      utils.auth.me.invalidate();
+      onClose();
+      onSuccess?.();
+      setTimeout(() => window.location.reload(), 300);
+    },
+    onError: (err) => {
+      toast.error(err.message || "Registration failed");
+    },
+  });
+
+  if (!isOpen) return null;
+
+  const handleSignIn = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signInEmail.trim() || !signInPassword) return;
+    loginMut.mutate({ emailOrUsername: signInEmail.trim(), password: signInPassword });
+  };
+
+  const handleSignUp = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (signUpPassword !== signUpConfirm) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (signUpPassword.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+    registerMut.mutate({
+      name: signUpName.trim(),
+      email: signUpEmail.trim(),
+      username: signUpUsername.trim(),
+      password: signUpPassword,
+    });
+  };
+
+  const bg = isDark ? "bg-black border-white/10" : "bg-white border-black/10";
+  const cardBg = isDark ? "bg-white/5" : "bg-black/5";
+  const labelColor = isDark ? "text-gray-400" : "text-gray-500";
+  const inputClass = `w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all ${
+    isDark
+      ? "bg-white/5 border-white/10 text-white placeholder-gray-600 focus:border-white/30"
+      : "bg-black/5 border-black/10 text-black placeholder-gray-400 focus:border-black/30"
+  }`;
+  const btnClass = `w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+    isDark ? "bg-white text-black hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
+  }`;
+  const tabActive = isDark ? "bg-white text-black" : "bg-black text-white";
+  const tabInactive = isDark ? "text-gray-500 hover:text-white" : "text-gray-400 hover:text-black";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 ${bg}`}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className={`absolute top-4 right-4 p-1.5 rounded-lg transition-colors ${
+            isDark ? "text-gray-500 hover:text-white hover:bg-white/10" : "text-gray-400 hover:text-black hover:bg-black/10"
+          }`}
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        {/* Header */}
+        <div className="mb-5">
+          <div className="text-2xl mb-1">🔐</div>
+          <h2 className={`text-lg font-black uppercase tracking-tight ${isDark ? "text-white" : "text-black"}`}>
+            {tab === "signin" ? "Welcome Back" : "Create Account"}
+          </h2>
+          <p className={`text-xs mt-0.5 ${labelColor}`}>
+            {tab === "signin"
+              ? "Sign in to access your VaultGenesis account"
+              : "No wallet needed — sign up with email"}
+          </p>
+        </div>
+
+        {/* Tabs */}
+        <div className={`flex rounded-xl p-0.5 mb-5 ${cardBg}`}>
+          <button
+            onClick={() => setTab("signin")}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+              tab === "signin" ? tabActive : tabInactive
+            }`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => setTab("signup")}
+            className={`flex-1 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+              tab === "signup" ? tabActive : tabInactive
+            }`}
+          >
+            Sign Up
+          </button>
+        </div>
+
+        {/* Sign In Form */}
+        {tab === "signin" && (
+          <form onSubmit={handleSignIn} className="space-y-3">
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Email or Username
+              </label>
+              <div className="relative">
+                <AtSign className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type="text"
+                  placeholder="you@example.com or username"
+                  value={signInEmail}
+                  onChange={e => setSignInEmail(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                  required
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Password
+              </label>
+              <div className="relative">
+                <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type={showSignInPwd ? "text" : "password"}
+                  placeholder="••••••••"
+                  value={signInPassword}
+                  onChange={e => setSignInPassword(e.target.value)}
+                  className={`${inputClass} pl-9 pr-10`}
+                  required
+                  autoComplete="current-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignInPwd(v => !v)}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${labelColor}`}
+                >
+                  {showSignInPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" className={btnClass} disabled={loginMut.isPending}>
+              {loginMut.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              {loginMut.isPending ? "Signing In..." : "Sign In"}
+            </button>
+
+            <p className={`text-center text-xs ${labelColor}`}>
+              No account?{" "}
+              <button
+                type="button"
+                onClick={() => setTab("signup")}
+                className={`font-bold underline ${isDark ? "text-white" : "text-black"}`}
+              >
+                Create one free
+              </button>
+            </p>
+          </form>
+        )}
+
+        {/* Sign Up Form */}
+        {tab === "signup" && (
+          <form onSubmit={handleSignUp} className="space-y-3">
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Full Name
+              </label>
+              <div className="relative">
+                <User className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type="text"
+                  placeholder="Your name"
+                  value={signUpName}
+                  onChange={e => setSignUpName(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                  required
+                  minLength={2}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Email
+              </label>
+              <div className="relative">
+                <Mail className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type="email"
+                  placeholder="you@example.com"
+                  value={signUpEmail}
+                  onChange={e => setSignUpEmail(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                  required
+                  autoComplete="email"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Username
+              </label>
+              <div className="relative">
+                <AtSign className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type="text"
+                  placeholder="yourhandle"
+                  value={signUpUsername}
+                  onChange={e => setSignUpUsername(e.target.value.replace(/[^a-zA-Z0-9_]/g, ""))}
+                  className={`${inputClass} pl-9`}
+                  required
+                  minLength={3}
+                  maxLength={32}
+                  autoComplete="username"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Password
+              </label>
+              <div className="relative">
+                <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type={showSignUpPwd ? "text" : "password"}
+                  placeholder="Min 8 characters"
+                  value={signUpPassword}
+                  onChange={e => setSignUpPassword(e.target.value)}
+                  className={`${inputClass} pl-9 pr-10`}
+                  required
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowSignUpPwd(v => !v)}
+                  className={`absolute right-3 top-1/2 -translate-y-1/2 ${labelColor}`}
+                >
+                  {showSignUpPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label className={`text-xs font-bold uppercase tracking-wider mb-1.5 block ${labelColor}`}>
+                Confirm Password
+              </label>
+              <div className="relative">
+                <Lock className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${labelColor}`} />
+                <input
+                  type={showSignUpPwd ? "text" : "password"}
+                  placeholder="Repeat password"
+                  value={signUpConfirm}
+                  onChange={e => setSignUpConfirm(e.target.value)}
+                  className={`${inputClass} pl-9`}
+                  required
+                  autoComplete="new-password"
+                />
+              </div>
+            </div>
+
+            <button type="submit" className={btnClass} disabled={registerMut.isPending}>
+              {registerMut.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+              {registerMut.isPending ? "Creating Account..." : "Create Account"}
+            </button>
+
+            <p className={`text-center text-xs ${labelColor}`}>
+              Already have an account?{" "}
+              <button
+                type="button"
+                onClick={() => setTab("signin")}
+                className={`font-bold underline ${isDark ? "text-white" : "text-black"}`}
+              >
+                Sign in
+              </button>
+            </p>
+          </form>
+        )}
+
+        {/* Divider */}
+        <div className={`flex items-center gap-3 my-4 ${labelColor}`}>
+          <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-black/10"}`} />
+          <span className="text-xs">or</span>
+          <div className={`flex-1 h-px ${isDark ? "bg-white/10" : "bg-black/10"}`} />
+        </div>
+
+        {/* Wallet option hint */}
+        <p className={`text-center text-xs ${labelColor}`}>
+          Have a crypto wallet?{" "}
+          <span className={`font-bold ${isDark ? "text-white" : "text-black"}`}>
+            Use the Connect Wallet button instead.
+          </span>
+        </p>
+      </div>
+    </div>
+  );
+}

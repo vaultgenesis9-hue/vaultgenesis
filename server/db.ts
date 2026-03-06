@@ -360,3 +360,62 @@ export async function updateAdminLastLogin(credId: number) {
 }
 
 // TODO: add feature queries here as your schema grows.
+
+// ─── Email/Password Auth Helpers ─────────────────────────────────────────────
+
+/** Find a user by email (for login) */
+export async function findUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.email, email)).limit(1);
+  return rows[0] ?? null;
+}
+
+/** Find a user by username (for login) */
+export async function findUserByUsername(username: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  return rows[0] ?? null;
+}
+
+/** Check if an email is already registered */
+export async function emailExists(email: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const rows = await db.select({ id: users.id }).from(users).where(eq(users.email, email)).limit(1);
+  return rows.length > 0;
+}
+
+/** Check if a username is already taken */
+export async function userUsernameExists(username: string): Promise<boolean> {
+  const db = await getDb();
+  if (!db) return false;
+  const rows = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
+  return rows.length > 0;
+}
+
+/** Create a new user with email + password (returns the new user row) */
+export async function createEmailUser(data: {
+  name: string;
+  email: string;
+  username: string;
+  passwordHash: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const openId = 'email_' + randomBytes(16).toString('hex');
+  const [result] = await db.insert(users).values({
+    openId,
+    name: data.name,
+    email: data.email,
+    username: data.username,
+    passwordHash: data.passwordHash,
+    loginMethod: 'email',
+    role: 'user',
+    lastSignedIn: new Date(),
+  });
+  const insertId = (result as any).insertId as number;
+  const rows = await db.select().from(users).where(eq(users.id, insertId)).limit(1);
+  return rows[0];
+}

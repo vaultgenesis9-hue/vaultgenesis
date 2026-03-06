@@ -3,14 +3,19 @@ import ScrollIndicator from './ScrollIndicator';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import WalletModal from './WalletModal';
+import AuthModal from './AuthModal';
 import { useWallet } from '@/hooks/useWallet';
+import { trpc } from '@/lib/trpc';
 
 export default function HeroSection() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isAnimating, setIsAnimating] = useState(true);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authTab, setAuthTab] = useState<'signin' | 'signup'>('signin');
   const { isConnected, shortAddress } = useWallet();
+  const { data: sessionUser } = trpc.auth.me.useQuery();
 
   useEffect(() => {
     // Animation completes after 2.5 seconds
@@ -20,6 +25,9 @@ export default function HeroSection() {
 
     return () => clearTimeout(timer);
   }, []);
+
+  const isEmailUser = sessionUser && sessionUser.loginMethod === 'email';
+  const displayName = sessionUser?.name || sessionUser?.username || sessionUser?.email?.split('@')[0];
 
   return (
     <div className={`relative w-full min-h-screen overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
@@ -83,7 +91,8 @@ export default function HeroSection() {
         </p>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row gap-1 mb-8">
+        <div className="flex flex-col sm:flex-row gap-2 mb-8">
+          {/* Wallet button */}
           <button
             onClick={() => setWalletModalOpen(true)}
             className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
@@ -93,6 +102,31 @@ export default function HeroSection() {
             }`}>
             {isConnected && shortAddress ? shortAddress : 'CONNECT WALLET'}
           </button>
+
+          {/* Sign In / user greeting — only show if not wallet-connected */}
+          {!isConnected && (
+            isEmailUser ? (
+              <button
+                onClick={() => window.location.href = '/profile'}
+                className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
+                  isDark
+                    ? 'border-white/30 text-white hover:bg-white/10'
+                    : 'border-black/30 text-black hover:bg-black/10'
+                }`}>
+                👤 {displayName ?? 'My Account'}
+              </button>
+            ) : (
+              <button
+                onClick={() => { setAuthTab('signin'); setAuthModalOpen(true); }}
+                className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
+                  isDark
+                    ? 'border-white/30 text-white hover:bg-white/10'
+                    : 'border-black/30 text-black hover:bg-black/10'
+                }`}>
+                SIGN IN / SIGN UP
+              </button>
+            )
+          )}
         </div>
 
         {/* Stats */}
@@ -121,6 +155,12 @@ export default function HeroSection() {
       <WalletModal
         isOpen={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}
+      />
+
+      <AuthModal
+        isOpen={authModalOpen}
+        onClose={() => setAuthModalOpen(false)}
+        defaultTab={authTab}
       />
     </div>
   );

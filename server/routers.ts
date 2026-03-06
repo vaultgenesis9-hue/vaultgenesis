@@ -22,6 +22,11 @@ import {
   updateUserProfile,
   findAdminByUsername,
   updateAdminLastLogin,
+  findUserByEmail,
+  findUserByUsername,
+  emailExists,
+  userUsernameExists,
+  createEmailUser,
 } from "./db";
 import { createHash } from "crypto";
 import { uploadToCloudinary } from "./cloudinary";
@@ -50,6 +55,65 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+
+    /** Register a new user with email + password */
+    register: publicProcedure
+      .input(z.object({
+        name: z.string().min(2).max(64),
+        email: z.string().email(),
+        username: z.string().min(3).max(32).regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+        password: z.string().min(8).max(128),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Check uniqueness
+        const emailTaken = await emailExists(input.email);
+        if (emailTaken) throw new TRPCError({ code: 'CONFLICT', message: 'Email already registered' });
+        const usernameTaken = await userUsernameExists(input.username);
+        if (usernameTaken) throw new TRPCError({ code: 'CONFLICT', message: 'Username already taken' });
+        // Hash password
+        const passwordHash = await bcrypt.hash(input.password, 12);
+        // Create user
+        const user = await createEmailUser({
+          name: input.name,
+          email: input.email,
+          username: input.username,
+          passwordHash,
+        });
+        if (!user) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to create account' });
+        // Create session JWT (same mechanism as OAuth users)
+        const { sdk } = await import('./_core/sdk');
+        const token = await sdk.createSessionToken(user.openId, { name: user.name ?? input.name });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        return { success: true, user: { id: user.id, name: user.name, email: user.email, username: user.username } };
+      }),
+
+    /** Login with email or username + password */
+    login: publicProcedure
+      .input(z.object({
+        emailOrUsername: z.string().min(1),
+        password: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Try email first, then username
+        const isEmail = input.emailOrUsername.includes('@');
+        const user = isEmail
+          ? await findUserByEmail(input.emailOrUsername)
+          : await findUserByUsername(input.emailOrUsername);
+        if (!user || !user.passwordHash) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email/username or password' });
+        }
+        const valid = await bcrypt.compare(input.password, user.passwordHash);
+        if (!valid) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email/username or password' });
+        }
+        // Create session JWT
+        const { sdk } = await import('./_core/sdk');
+        const token = await sdk.createSessionToken(user.openId, { name: user.name ?? '' });
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        return { success: true, user: { id: user.id, name: user.name, email: user.email, username: user.username } };
+      }),
   }),
 
   users: router({
