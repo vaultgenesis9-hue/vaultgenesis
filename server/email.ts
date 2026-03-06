@@ -1,6 +1,16 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization - only throw when actually used, not at startup
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error("RESEND_API_KEY is not configured. Email sending is unavailable.");
+    }
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 
 const FROM_EMAIL = "VaultGenesis <noreply@vaultgenesis.com>";
 
@@ -15,7 +25,7 @@ interface SendEmailOptions {
  * Send a transactional email via Resend
  */
 export async function sendEmail(options: SendEmailOptions): Promise<void> {
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await getResend().emails.send({
     from: options.from ?? FROM_EMAIL,
     to: Array.isArray(options.to) ? options.to : [options.to],
     subject: options.subject,

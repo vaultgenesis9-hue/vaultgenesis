@@ -147,3 +147,7 @@
 - [x] Remove /bot-trading route from App.tsx
 - [x] Remove Bots tab from Admin dashboard sidebar (kept in sidebar but shows disabled message)
 - [x] Replace Bots section content with disabled placeholder in Admin.tsx
+
+## Railway Deployment Fix
+- [ ] Fix RESEND_API_KEY crash - make Resend init lazy (only throw when actually used)
+- [ ] Fix OAUTH_SERVER_URL crash - make OAuth init graceful when env var missing
