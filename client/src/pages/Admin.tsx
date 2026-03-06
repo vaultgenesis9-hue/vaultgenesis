@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,6 +124,16 @@ export default function Admin() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [, navigate] = useLocation();
+
+  // ─── Route Guard ───────────────────────────────────────────────────────────
+  const { data: adminSession, isLoading: sessionLoading } = trpc.adminAuth.me.useQuery();
+
+  useEffect(() => {
+    if (!sessionLoading && !adminSession) {
+      navigate("/admin/login");
+    }
+  }, [adminSession, sessionLoading, navigate]);
 
   // Users state — real DB data
   const [userSearch, setUserSearch] = useState("");

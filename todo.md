@@ -136,3 +136,8 @@
 - [x] Add tRPC adminAuth.logout procedure to clear admin session
 - [x] Auto-redirect to /admin if already logged in as admin
 - [x] Add /admin/login route to App.tsx
+
+## Admin Security & GitHub
+- [ ] Add route guard to /admin — redirect to /admin/login if no valid admin_session cookie
+- [x] Seed default first admin account in the database (username: vaultadmin)
+- [ ] Push project to GitHub via Manus Settings → GitHub export
