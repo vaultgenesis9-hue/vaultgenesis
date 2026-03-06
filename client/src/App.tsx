@@ -9,7 +9,6 @@ import TokenCreator from "./pages/TokenCreator";
 import Presale from "./pages/Presale";
 import Staking from "./pages/Staking";
 import Wallet from "./pages/Wallet";
-import BotTrading from "./pages/BotTrading";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import AdminLogin from "./pages/AdminLogin";
@@ -22,7 +21,6 @@ function Router() {
       <Route path={"/presale"} component={Presale} />
       <Route path={"/staking"} component={Staking} />
       <Route path={"/wallet"} component={Wallet} />
-      <Route path={"/bot-trading"} component={BotTrading} />
       <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/profile"} component={Profile} />

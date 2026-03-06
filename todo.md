@@ -141,3 +141,9 @@
 - [ ] Add route guard to /admin — redirect to /admin/login if no valid admin_session cookie
 - [x] Seed default first admin account in the database (username: vaultadmin)
 - [ ] Push project to GitHub via Manus Settings → GitHub export
+
+## Bot Trading Deactivation
+- [x] Remove Bot Trading link from Navbar
+- [x] Remove /bot-trading route from App.tsx
+- [x] Remove Bots tab from Admin dashboard sidebar (kept in sidebar but shows disabled message)
+- [x] Replace Bots section content with disabled placeholder in Admin.tsx

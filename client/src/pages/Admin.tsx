@@ -985,75 +985,17 @@ export default function Admin() {
             </div>
           )}
 
-          {/* ── BOTS ── */}
+          {/* ── BOTS (DISABLED) ── */}
           {activeTab === "bots" && (
             <div className="space-y-4">
               <div>
                 <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Bots</h1>
-                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Monitor and control all trading bots</p>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Bot trading is currently disabled.</p>
               </div>
-
-              {/* Summary */}
-              <div className="grid grid-cols-3 gap-4">
-                {[
-                  { label: "Active", value: bots.filter(b => b.status === "active").length, color: "text-green-400" },
-                  { label: "Paused", value: bots.filter(b => b.status === "paused").length, color: "text-yellow-400" },
-                  { label: "Stopped", value: bots.filter(b => b.status === "stopped").length, color: "text-gray-400" },
-                ].map(s => (
-                  <div key={s.label} className={`${cardClass} p-4 text-center`}>
-                    <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
-                    <p className={labelClass}>{s.label}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className={`${cardClass} p-5`}>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                        {["Bot", "Owner", "Strategy", "Allocated", "Profit", "Trades", "Win Rate", "Status", "Actions"].map(h => (
-                          <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {bots.map(bot => (
-                        <tr key={bot.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{bot.name}</td>
-                          <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{bot.owner}</td>
-                          <td className="py-3 pr-3">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border ${isDark ? 'border-white/10 bg-white/5 text-gray-300' : 'border-black/10 bg-black/5 text-gray-700'}`}>{bot.strategy}</span>
-                          </td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{bot.allocated}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${bot.profit.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{bot.profit}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{bot.trades}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{bot.winRate}</td>
-                          <td className="py-3 pr-3"><span className={statusBadge(bot.status)}>{bot.status}</span></td>
-                          <td className="py-3">
-                            <div className="flex gap-1">
-                              {bot.status === "active" && (
-                                <Button onClick={() => handleBotAction(bot.id, "pause")} size="sm" className={actionBtn("yellow")} title="Pause">
-                                  <Pause className="w-3 h-3" />
-                                </Button>
-                              )}
-                              {bot.status === "paused" && (
-                                <Button onClick={() => handleBotAction(bot.id, "resume")} size="sm" className={actionBtn("green")} title="Resume">
-                                  <Play className="w-3 h-3" />
-                                </Button>
-                              )}
-                              {bot.status !== "stopped" && (
-                                <Button onClick={() => handleBotAction(bot.id, "stop")} size="sm" className={actionBtn("red")} title="Force Stop">
-                                  <X className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className={`${cardClass} p-10 text-center`}>
+                <Bot className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+                <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>Bot Trading Disabled</p>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>This feature has been temporarily deactivated and will return in a future update.</p>
               </div>
             </div>
           )}

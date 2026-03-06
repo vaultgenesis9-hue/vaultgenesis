@@ -15,7 +15,6 @@ const navLinks = [
   { label: "PRESALE", href: "/presale" },
   { label: "STAKING", href: "/staking" },
   { label: "WALLET", href: "/wallet" },
-  { label: "BOT TRADING", href: "/bot-trading" },
   { label: "MY PROFILE", href: "/profile" },
 ];
 
