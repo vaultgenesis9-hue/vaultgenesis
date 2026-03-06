@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
-import { CheckCircle, Upload, ChevronRight, ChevronLeft, Coins } from "lucide-react";
+import { CheckCircle, Upload, ChevronRight, ChevronLeft, Coins, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const STEPS = ["Basic Info", "Supply & Decimals", "Logo Upload", "Review & Deploy"];
 
@@ -22,12 +24,18 @@ interface FormData {
 export default function TokenCreator() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [isDeploying, setIsDeploying] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deployed, setDeployed] = useState(false);
   const [contractAddress, setContractAddress] = useState("");
+  const [cloudinaryUrl, setCloudinaryUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const uploadImageMutation = trpc.upload.image.useMutation();
+  const sendEmailMutation = trpc.email.sendTokenDeployed.useMutation();
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -43,15 +51,37 @@ export default function TokenCreator() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
       toast.error("Logo must be under 2MB");
       return;
     }
-    const url = URL.createObjectURL(file);
-    setFormData({ ...formData, logoFile: file, logoUrl: url });
+    // Show local preview immediately
+    const localUrl = URL.createObjectURL(file);
+    setFormData({ ...formData, logoFile: file, logoUrl: localUrl });
+
+    // Upload to Cloudinary in background
+    setIsUploadingLogo(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const dataUri = reader.result as string; // full data URI e.g. data:image/png;base64,...
+        const result = await uploadImageMutation.mutateAsync({
+          dataUri,
+          folder: 'token-logos',
+        });
+        setCloudinaryUrl(result.url);
+        setFormData(prev => ({ ...prev, logoUrl: result.url }));
+        toast.success("Logo uploaded to Cloudinary");
+        setIsUploadingLogo(false);
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.error("Logo upload failed — using local preview");
+      setIsUploadingLogo(false);
+    }
   };
 
   const validateStep = () => {
@@ -78,13 +108,33 @@ export default function TokenCreator() {
   const prevStep = () => setCurrentStep(s => Math.max(s - 1, 0));
 
   const handleDeploy = async () => {
+    if (isUploadingLogo) {
+      toast.error("Please wait for logo upload to finish");
+      return;
+    }
     setIsDeploying(true);
-    await new Promise(r => setTimeout(r, 2500));
-    const mockAddress = "0x" + Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");
-    setContractAddress(mockAddress);
-    setIsDeploying(false);
-    setDeployed(true);
-    toast.success(`Token "${formData.name}" deployed successfully!`);
+    try {
+      // Simulate blockchain deployment (replace with real contract call when ready)
+      await new Promise(r => setTimeout(r, 2500));
+      const mockAddress = "0x" + Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");
+      setContractAddress(mockAddress);
+      setDeployed(true);
+      toast.success(`Token "${formData.name}" deployed successfully!`);
+
+      // Send confirmation email if user has an email on file
+      if (user?.email) {
+        sendEmailMutation.mutate({
+          to: user.email,
+          tokenName: formData.name,
+          tokenSymbol: formData.symbol,
+          txHash: mockAddress,
+        });
+      }
+    } catch (err) {
+      toast.error("Deployment failed. Please try again.");
+    } finally {
+      setIsDeploying(false);
+    }
   };
 
   const resetForm = () => {
@@ -254,15 +304,23 @@ export default function TokenCreator() {
                   <div className="space-y-5">
                     <h2 className={`text-xl font-black mb-4 ${isDark ? 'text-white' : 'text-black'}`}>Token Logo</h2>
                     <div
-                      onClick={() => fileInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-2xl p-10 text-center cursor-pointer transition-all ${
-                        isDark ? 'border-white/20 hover:border-white/40' : 'border-black/20 hover:border-black/40'
-                      }`}
+                      onClick={() => !isUploadingLogo && fileInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-2xl p-10 text-center transition-all relative ${
+                        isUploadingLogo ? 'cursor-wait opacity-70' : 'cursor-pointer'
+                      } ${isDark ? 'border-white/20 hover:border-white/40' : 'border-black/20 hover:border-black/40'}`}
                     >
+                      {isUploadingLogo && (
+                        <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30 z-10">
+                          <Loader2 className="w-8 h-8 text-white animate-spin" />
+                          <span className="ml-2 text-white text-sm font-semibold">Uploading to Cloudinary...</span>
+                        </div>
+                      )}
                       {formData.logoUrl ? (
                         <div className="flex flex-col items-center gap-3">
                           <img src={formData.logoUrl} alt="Token logo preview" className="w-24 h-24 rounded-full object-cover border-4 border-white/20" />
-                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Click to change logo</p>
+                          <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+                            {cloudinaryUrl ? '✅ Uploaded to Cloudinary' : 'Click to change logo'}
+                          </p>
                         </div>
                       ) : (
                         <div className="flex flex-col items-center gap-3">

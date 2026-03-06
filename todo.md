@@ -122,3 +122,17 @@
 - [x] Integrate Resend for transactional emails (server/email.ts + trpc.email.sendWelcome/sendTokenDeployed)
 - [x] Integrate Sentry for frontend + backend error tracking (client/src/lib/sentry.ts + server/_core/sentry.ts)
 - [x] Integrate Etherscan API for transaction hash verification (server/etherscan.ts + trpc.blockchain.*)
+
+## Token Creator — Real Integrations
+- [x] Wire Step 3 logo upload to Cloudinary via trpc.upload.image (base64 → Cloudinary URL)
+- [x] Wire Step 4 deploy button to save token to DB via tRPC procedure
+- [x] After deploy, call trpc.email.sendTokenDeployed to notify user by email
+- [x] Show Cloudinary image URL in the token preview card
+
+## Admin Login Page
+- [x] Build /admin/login page with username + password form
+- [x] Add tRPC adminAuth.login procedure (bcrypt password verification + admin_session cookie)
+- [x] Add tRPC adminAuth.me procedure to check current admin session
+- [x] Add tRPC adminAuth.logout procedure to clear admin session
+- [x] Auto-redirect to /admin if already logged in as admin
+- [x] Add /admin/login route to App.tsx

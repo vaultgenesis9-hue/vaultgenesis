@@ -20,11 +20,23 @@ import {
   setUserBanned,
   setUserRole,
   updateUserProfile,
+  findAdminByUsername,
+  updateAdminLastLogin,
 } from "./db";
 import { createHash } from "crypto";
 import { uploadToCloudinary } from "./cloudinary";
 import { sendEmail } from "./email";
 import { getTxStatus, getWalletBalance, getWalletTransactions, etherscanUrl } from "./etherscan";
+import bcrypt from "bcryptjs";
+// Helper to build Set-Cookie header string manually
+const buildCookieHeader = (name: string, value: string, opts: { httpOnly?: boolean; path?: string; maxAge?: number; sameSite?: string } = {}) => {
+  let str = `${name}=${value}`;
+  if (opts.path) str += `; Path=${opts.path}`;
+  if (opts.maxAge !== undefined) str += `; Max-Age=${opts.maxAge}`;
+  if (opts.httpOnly) str += `; HttpOnly`;
+  if (opts.sameSite) str += `; SameSite=${opts.sameSite}`;
+  return str;
+};
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -241,6 +253,59 @@ export const appRouter = router({
       .query(({ input }) => {
         return { url: etherscanUrl(input.type, input.value, input.network ?? 'mainnet') };
       }),
+  }),
+
+  /** Admin credential login (separate from Manus OAuth) */
+  adminAuth: router({
+    login: publicProcedure
+      .input(z.object({ username: z.string(), password: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const admin = await findAdminByUsername(input.username);
+        if (!admin || !admin.isActive) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' });
+        }
+        // Support both SHA-256 (legacy) and bcrypt hashes
+        let passwordValid = false;
+        if (admin.passwordHash.startsWith('$2')) {
+          passwordValid = await bcrypt.compare(input.password, admin.passwordHash);
+        } else {
+          // SHA-256 fallback for accounts created before bcrypt migration
+          const sha256Hash = createHash('sha256').update(input.password).digest('hex');
+          passwordValid = sha256Hash === admin.passwordHash;
+        }
+        if (!passwordValid) {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' });
+        }
+        await updateAdminLastLogin(admin.id);
+        // Set admin session cookie
+        const sessionData = JSON.stringify({ adminId: admin.id, userId: admin.userId, role: 'admin', name: admin.name });
+        const encoded = Buffer.from(sessionData).toString('base64');
+        const cookieStr = buildCookieHeader('admin_session', encoded, {
+          httpOnly: true,
+          path: '/',
+          maxAge: 60 * 60 * 24, // 24 hours
+          sameSite: 'Lax',
+        });
+        ctx.res.setHeader('Set-Cookie', cookieStr);
+        return { success: true, name: admin.name, role: admin.role };
+      }),
+
+    logout: publicProcedure.mutation(async ({ ctx }) => {
+      const cookieStr = buildCookieHeader('admin_session', '', { httpOnly: true, path: '/', maxAge: 0 });
+      ctx.res.setHeader('Set-Cookie', cookieStr);
+      return { success: true };
+    }),
+
+    me: publicProcedure.query(async ({ ctx }) => {
+      const raw = ctx.req.cookies?.['admin_session'];
+      if (!raw) return null;
+      try {
+        const data = JSON.parse(Buffer.from(raw, 'base64').toString());
+        return data as { adminId: number; userId: number; role: string; name: string };
+      } catch {
+        return null;
+      }
+    }),
   }),
 
   /** Send transactional emails via Resend */

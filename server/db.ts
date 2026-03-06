@@ -330,4 +330,33 @@ export async function usernameExists(username: string) {
   return rows.length > 0;
 }
 
+export async function findAdminByUsername(username: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db
+    .select({
+      id: adminCredentials.id,
+      userId: adminCredentials.userId,
+      username: adminCredentials.username,
+      passwordHash: adminCredentials.passwordHash,
+      isActive: adminCredentials.isActive,
+      name: users.name,
+      email: users.email,
+      role: users.role,
+    })
+    .from(adminCredentials)
+    .leftJoin(users, eq(adminCredentials.userId, users.id))
+    .where(eq(adminCredentials.username, username))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateAdminLastLogin(credId: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(adminCredentials)
+    .set({ lastLoginAt: new Date() })
+    .where(eq(adminCredentials.id, credId));
+}
+
 // TODO: add feature queries here as your schema grows.

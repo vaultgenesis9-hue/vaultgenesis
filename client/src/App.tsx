@@ -12,6 +12,7 @@ import Wallet from "./pages/Wallet";
 import BotTrading from "./pages/BotTrading";
 import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
+import AdminLogin from "./pages/AdminLogin";
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
@@ -22,6 +23,7 @@ function Router() {
       <Route path={"/staking"} component={Staking} />
       <Route path={"/wallet"} component={Wallet} />
       <Route path={"/bot-trading"} component={BotTrading} />
+      <Route path={"/admin/login"} component={AdminLogin} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/profile"} component={Profile} />
       <Route path={"/404"} component={NotFound} />
