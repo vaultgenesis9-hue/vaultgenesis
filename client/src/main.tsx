@@ -1,4 +1,7 @@
+import { initSentry } from "@/lib/sentry";
+import { wagmiConfig } from "@/lib/wagmi";
 import { trpc } from "@/lib/trpc";
+import { WagmiProvider } from "wagmi";
 import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
@@ -7,6 +10,9 @@ import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
+
+// Initialize Sentry as early as possible
+initSentry();
 
 const queryClient = new QueryClient();
 
@@ -53,9 +59,11 @@ const trpcClient = trpc.createClient({
 });
 
 createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </trpc.Provider>
+  <WagmiProvider config={wagmiConfig}>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </trpc.Provider>
+  </WagmiProvider>
 );

@@ -22,6 +22,9 @@ import {
   updateUserProfile,
 } from "./db";
 import { createHash } from "crypto";
+import { uploadToCloudinary } from "./cloudinary";
+import { sendEmail } from "./email";
+import { getTxStatus, getWalletBalance, getWalletTransactions, etherscanUrl } from "./etherscan";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -191,6 +194,78 @@ export const appRouter = router({
     generateMyToken: protectedProcedure.mutation(async ({ ctx }) => {
       return createTokenForUser(ctx.user.id, 'My API Token');
     }),
+  }),
+
+  /** Upload image to Cloudinary */
+  upload: router({
+    image: protectedProcedure
+      .input(z.object({
+        dataUri: z.string(), // base64 data URI
+        folder: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const result = await uploadToCloudinary(input.dataUri, {
+          folder: input.folder ?? 'vaultgenesis/tokens',
+        });
+        return result;
+      }),
+  }),
+
+  /** Etherscan blockchain data */
+  blockchain: router({
+    getTxStatus: publicProcedure
+      .input(z.object({ txHash: z.string() }))
+      .query(async ({ input }) => {
+        return getTxStatus(input.txHash);
+      }),
+
+    getWalletBalance: publicProcedure
+      .input(z.object({ address: z.string() }))
+      .query(async ({ input }) => {
+        const balance = await getWalletBalance(input.address);
+        return { balance, address: input.address };
+      }),
+
+    getWalletTransactions: protectedProcedure
+      .input(z.object({ address: z.string(), limit: z.number().optional() }))
+      .query(async ({ input }) => {
+        return getWalletTransactions(input.address, input.limit ?? 10);
+      }),
+
+    etherscanUrl: publicProcedure
+      .input(z.object({
+        type: z.enum(['tx', 'address', 'token']),
+        value: z.string(),
+        network: z.enum(['mainnet', 'sepolia']).optional(),
+      }))
+      .query(({ input }) => {
+        return { url: etherscanUrl(input.type, input.value, input.network ?? 'mainnet') };
+      }),
+  }),
+
+  /** Send transactional emails via Resend */
+  email: router({
+    sendWelcome: protectedProcedure
+      .input(z.object({ to: z.string().email(), name: z.string() }))
+      .mutation(async ({ input }) => {
+        await sendEmail({
+          to: input.to,
+          subject: 'Welcome to VaultGenesis',
+          html: `<h1>Welcome, ${input.name}!</h1><p>Your account on VaultGenesis is ready. Start creating tokens, staking, and trading today.</p><p><a href="https://vaultgenesis.com">Visit VaultGenesis</a></p>`,
+        });
+        return { success: true };
+      }),
+
+    sendTokenDeployed: protectedProcedure
+      .input(z.object({ to: z.string().email(), tokenName: z.string(), tokenSymbol: z.string(), txHash: z.string().optional() }))
+      .mutation(async ({ input }) => {
+        await sendEmail({
+          to: input.to,
+          subject: `Your token ${input.tokenSymbol} has been deployed!`,
+          html: `<h1>Token Deployed Successfully</h1><p>Your token <strong>${input.tokenName} (${input.tokenSymbol})</strong> has been deployed on the blockchain.</p>${input.txHash ? `<p><a href="https://etherscan.io/tx/${input.txHash}">View on Etherscan</a></p>` : ''}<p><a href="https://vaultgenesis.com">Back to VaultGenesis</a></p>`,
+        });
+        return { success: true };
+      }),
   }),
 });
 

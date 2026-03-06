@@ -113,3 +113,12 @@
 - [x] Wire profile save to update the users table in DB
 - [x] Add MY PROFILE link to Navbar mobile menu
 - [x] Show loading/empty states in Admin Users tab when no real users exist yet
+
+## Third-Party Service Integrations
+- [x] Integrate Alchemy RPC for real blockchain connection (wagmi + viem + Alchemy transport)
+- [x] Integrate WalletConnect Cloud for mobile wallet QR scanning (VITE_WALLETCONNECT_PROJECT_ID)
+- [x] Integrate MetaMask SDK for browser wallet connection (wagmi MetaMask connector)
+- [x] Integrate Cloudinary for token logo image uploads (server/cloudinary.ts + trpc.upload.image)
+- [x] Integrate Resend for transactional emails (server/email.ts + trpc.email.sendWelcome/sendTokenDeployed)
+- [x] Integrate Sentry for frontend + backend error tracking (client/src/lib/sentry.ts + server/_core/sentry.ts)
+- [x] Integrate Etherscan API for transaction hash verification (server/etherscan.ts + trpc.blockchain.*)

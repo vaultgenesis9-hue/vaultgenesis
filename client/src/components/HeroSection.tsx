@@ -3,17 +3,14 @@ import ScrollIndicator from './ScrollIndicator';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import WalletModal from './WalletModal';
+import { useWallet } from '@/hooks/useWallet';
 
 export default function HeroSection() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const [isAnimating, setIsAnimating] = useState(true);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
-  const [connectedAddress, setConnectedAddress] = useState<string | null>(null);
-
-  const handleWalletConnect = (address: string, _wallet: string) => {
-    setConnectedAddress(address);
-  };
+  const { isConnected, shortAddress } = useWallet();
 
   useEffect(() => {
     // Animation completes after 2.5 seconds
@@ -94,7 +91,7 @@ export default function HeroSection() {
                 ? 'bg-white text-black border-white hover:bg-transparent hover:text-white'
                 : 'bg-black text-white border-black hover:bg-transparent hover:text-black'
             }`}>
-            {connectedAddress ? `${connectedAddress.slice(0, 6)}...${connectedAddress.slice(-4)}` : 'CONNECT WALLET'}
+            {isConnected && shortAddress ? shortAddress : 'CONNECT WALLET'}
           </button>
         </div>
 
@@ -124,7 +121,6 @@ export default function HeroSection() {
       <WalletModal
         isOpen={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}
-        onConnect={handleWalletConnect}
       />
     </div>
   );
