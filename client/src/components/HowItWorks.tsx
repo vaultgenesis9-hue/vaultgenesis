@@ -1,4 +1,5 @@
 import { useTheme } from '@/contexts/ThemeContext';
+import { useLocation } from 'wouter';
 
 const steps = [
   {
@@ -27,15 +28,16 @@ const steps = [
   },
   {
     number: "05",
-    title: "Activate Trading Bots",
-    description: "Deploy AI-powered trading bots with scalping, arbitrage, or momentum strategies. Set risk parameters and let the bot trade for you.",
-    icon: "🤖",
+    title: "Monitor & Grow",
+    description: "Track your portfolio, staking rewards, and presale contributions in real time from your profile dashboard. Stay in control of your DeFi journey.",
+    icon: "📈",
   },
 ];
 
 export default function HowItWorks() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const [, navigate] = useLocation();
 
   return (
     <section className={`relative py-20 px-4 overflow-hidden ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
@@ -104,7 +106,9 @@ export default function HowItWorks() {
           <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
             Ready to start your crypto journey?
           </p>
-          <button className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
+          <button
+            onClick={() => navigate('/token-creator')}
+            className={`px-6 py-2 font-semibold rounded-full uppercase text-xs tracking-wider border-2 transition-all duration-300 ${
             isDark
               ? 'bg-white text-black border-white hover:bg-transparent hover:text-white'
               : 'bg-black text-white border-black hover:bg-transparent hover:text-black'

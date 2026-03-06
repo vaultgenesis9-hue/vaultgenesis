@@ -1,52 +1,37 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle, Home } from "lucide-react";
+import { Home } from "lucide-react";
 import { useLocation } from "wouter";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function NotFound() {
   const [, setLocation] = useLocation();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   const handleGoHome = () => {
     setLocation("/");
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-      <Card className="w-full max-w-lg mx-4 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-        <CardContent className="pt-8 pb-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-red-100 rounded-full animate-pulse" />
-              <AlertCircle className="relative h-16 w-16 text-red-500" />
-            </div>
-          </div>
-
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">404</h1>
-
-          <h2 className="text-xl font-semibold text-slate-700 mb-4">
-            Page Not Found
-          </h2>
-
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
-          </p>
-
-          <div
-            id="not-found-button-group"
-            className="flex flex-col sm:flex-row gap-3 justify-center"
-          >
-            <Button
-              onClick={handleGoHome}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Go Home
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className={`min-h-screen w-full flex items-center justify-center ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
+      <div className={`w-full max-w-sm mx-4 rounded-2xl border p-10 text-center ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-black/10'}`}>
+        <div className="text-6xl mb-4">🔒</div>
+        <h1 className={`text-7xl font-black uppercase tracking-tighter mb-2 ${isDark ? 'text-white' : 'text-black'}`}>404</h1>
+        <h2 className={`text-lg font-black uppercase tracking-wider mb-3 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+          Page Not Found
+        </h2>
+        <p className={`text-xs mb-8 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+          The page you are looking for doesn't exist or has been moved.
+        </p>
+        <button
+          onClick={handleGoHome}
+          className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all ${
+            isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'
+          }`}
+        >
+          <Home className="w-3 h-3 inline mr-2" />
+          Go Home
+        </button>
+      </div>
     </div>
   );
 }

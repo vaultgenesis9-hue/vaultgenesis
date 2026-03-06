@@ -149,9 +149,19 @@
 - [x] Replace Bots section content with disabled placeholder in Admin.tsx
 
 ## Railway Deployment Fix
-- [ ] Fix RESEND_API_KEY crash - make Resend init lazy (only throw when actually used)
-- [ ] Fix OAUTH_SERVER_URL crash - make OAuth init graceful when env var missing
+- [x] Fix RESEND_API_KEY crash - make Resend init lazy (only throw when actually used)
+- [x] Fix OAUTH_SERVER_URL crash - make OAuth init graceful when env var missing
 
 ## Remove Manus OAuth Dependency
 - [x] Make OAUTH_SERVER_URL, VITE_APP_ID, VITE_OAUTH_PORTAL_URL optional (no crash on startup)
 - [x] Fix getLoginUrl() to return '#' when OAuth env vars are missing (prevents Invalid URL crash)
+
+## Bug Fixes (QA Round)
+- [x] Fix duplicate wallet entries in Connect Wallet modal (Phantom and MetaMask appear twice)
+- [x] Fix "Get Started Now" button on homepage - should navigate to /token-creator
+- [x] Fix "Step 5 - Activate Trading Bots" in How It Works section - replaced with Monitor & Grow
+- [x] Fix Profile page Sign In button - replace with Connect Wallet prompt
+- [x] Fix 404 page white background - apply dark theme
+- [x] Fix wallet icon button in navbar - should open Connect Wallet modal when clicked
+- [x] Fix Profile page auth flow - wallet-connected users should go straight to profile (name/email form), not see a Sign In gate
+- [x] Fix APY History chart on Staking page - bars render correctly (custom CSS bars, not Recharts)

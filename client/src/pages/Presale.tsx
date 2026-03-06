@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
+import WalletModal from "@/components/WalletModal";
 import { Clock, TrendingUp, Users, DollarSign, CheckCircle } from "lucide-react";
+import { useAccount } from "wagmi";
 
 interface Contribution {
   id: number;
@@ -65,7 +67,8 @@ export default function Presale() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [selectedTier, setSelectedTier] = useState(1);
-  const [walletConnected] = useState(false);
+  const { isConnected: walletConnected, address: walletAddress } = useAccount();
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [contributions, setContributions] = useState<Contribution[]>(MOCK_CONTRIBUTIONS);
   const [isBuying, setIsBuying] = useState(false);
   const timeLeft = useCountdown(PRESALE_END);
@@ -78,7 +81,7 @@ export default function Presale() {
   const tokensToReceive = amount ? Math.floor(Number(amount) / activeTier.price) : 0;
 
   const handleBuy = async () => {
-    if (!walletConnected) { toast.error("Please connect your wallet first"); return; }
+    if (!walletConnected) { setWalletModalOpen(true); return; }
     if (!amount || Number(amount) <= 0) { toast.error("Enter a valid amount"); return; }
     if (Number(amount) < activeTier.minBuy) { toast.error(`Minimum contribution is $${activeTier.minBuy}`); return; }
     if (Number(amount) > activeTier.maxBuy) { toast.error(`Maximum contribution is $${activeTier.maxBuy}`); return; }
@@ -277,6 +280,7 @@ export default function Presale() {
           </div>
         </div>
       </main>
+      <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
     </div>
   );
 }

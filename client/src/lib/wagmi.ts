@@ -3,28 +3,36 @@ import { mainnet, sepolia, bsc, polygon } from "wagmi/chains";
 import { injected, walletConnect, coinbaseWallet } from "wagmi/connectors";
 
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID as string;
-// Alchemy URL is server-side only (ALCHEMY_API_URL), so we use a public fallback for the frontend.
-// The backend uses ALCHEMY_API_URL directly for on-chain reads.
+
+// Use a single injected() connector without a specific target.
+// This auto-detects all installed browser wallets (MetaMask, Phantom, etc.)
+// and avoids duplicates that occur when injected({ target: "metaMask" }) and
+// injected({ target: "phantom" }) are both listed alongside the generic injected().
+const connectors = [
+  injected(),
+  coinbaseWallet({
+    appName: "VaultGenesis",
+  }),
+  // Only add WalletConnect if projectId is available to prevent crash when env var is missing
+  ...(projectId
+    ? [
+        walletConnect({
+          projectId,
+          metadata: {
+            name: "VaultGenesis",
+            description: "The next-generation DeFi platform",
+            url: "https://vaultgenesis.com",
+            icons: ["https://vaultgenesis.com/favicon.ico"],
+          },
+        }),
+      ]
+    : []),
+];
+
 export const wagmiConfig = createConfig({
   chains: [mainnet, bsc, polygon, sepolia],
-  connectors: [
-    injected({ target: "metaMask" }),
-    walletConnect({
-      projectId,
-      metadata: {
-        name: "VaultGenesis",
-        description: "The next-generation DeFi platform",
-        url: "https://vaultgenesis.com",
-        icons: ["https://vaultgenesis.com/favicon.ico"],
-      },
-    }),
-    coinbaseWallet({
-      appName: "VaultGenesis",
-    }),
-    injected({ target: "phantom" }),
-  ],
+  connectors,
   transports: {
-    // Use Alchemy via the backend proxy; fallback to public RPC for frontend reads
     [mainnet.id]: http(),
     [bsc.id]: http("https://bsc-dataseed.binance.org/"),
     [polygon.id]: http("https://polygon-rpc.com/"),

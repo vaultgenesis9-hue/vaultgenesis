@@ -2,31 +2,36 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
+import WalletModal from "@/components/WalletModal";
 import { Button } from "@/components/ui/button";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { User, Mail, Wallet, Save, CheckCircle, Loader2, Lock } from "lucide-react";
-import { getLoginUrl } from "@/const";
+import { User, Mail, Wallet, Save, CheckCircle, Loader2 } from "lucide-react";
+import { useAccount } from "wagmi";
 
 export default function Profile() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
   const { user, loading, isAuthenticated } = useAuth();
+  const { isConnected, address: connectedAddress } = useAccount();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [walletAddress, setWalletAddress] = useState("");
   const [saved, setSaved] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
 
   // Pre-fill form with existing data when user loads
   useEffect(() => {
     if (user) {
       setName(user.name ?? "");
       setEmail(user.email ?? "");
-      setWalletAddress((user as Record<string, unknown>).walletAddress as string ?? "");
+      setWalletAddress((user as Record<string, unknown>).walletAddress as string ?? connectedAddress ?? "");
+    } else if (connectedAddress && !walletAddress) {
+      setWalletAddress(connectedAddress);
     }
-  }, [user]);
+  }, [user, connectedAddress]);
 
   const updateProfile = trpc.users.updateProfile.useMutation({
     onSuccess: () => {
@@ -71,26 +76,31 @@ export default function Profile() {
     );
   }
 
-  if (!isAuthenticated) {
+  // Show connect wallet prompt if wallet is not connected
+  if (!isAuthenticated && !isConnected) {
     return (
       <div className={`min-h-screen ${bg} flex flex-col`}>
         <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
         <div className="flex-1 flex items-center justify-center p-6">
           <div className={`w-full max-w-sm rounded-2xl border p-8 text-center ${cardBg}`}>
-            <Lock className={`w-10 h-10 mx-auto mb-4 ${isDark ? "text-gray-600" : "text-gray-300"}`} />
+            <Wallet className={`w-10 h-10 mx-auto mb-4 ${isDark ? "text-gray-600" : "text-gray-300"}`} />
             <h2 className={`text-xl font-black uppercase tracking-tighter mb-2 ${isDark ? "text-white" : "text-black"}`}>
-              Sign In Required
+              Connect Your Wallet
             </h2>
             <p className={`text-xs mb-6 ${isDark ? "text-gray-500" : "text-gray-500"}`}>
-              Please sign in to view and edit your profile.
+              Connect your wallet to view and edit your profile.
             </p>
-            <a href={getLoginUrl()} className={`block w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-center transition-all ${
-              isDark ? "bg-white text-black hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
-            }`}>
-              Sign In
-            </a>
+            <button
+              onClick={() => setWalletModalOpen(true)}
+              className={`w-full py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest text-center transition-all ${
+                isDark ? "bg-white text-black hover:bg-gray-200" : "bg-black text-white hover:bg-gray-800"
+              }`}
+            >
+              Connect Wallet
+            </button>
           </div>
         </div>
+        <WalletModal isOpen={walletModalOpen} onClose={() => setWalletModalOpen(false)} />
       </div>
     );
   }
