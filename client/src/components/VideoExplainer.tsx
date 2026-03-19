@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-const VIDEO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663061635487/hDJwWwsXRADFzVMPvCDuWe/vaultgenesis-explainer_c0e9c4e1.mp4";
+const VIDEO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663061635487/hDJwWwsXRADFzVMPvCDuWe/vaultgenesis-explainer-v2_bd201b4f.mp4";
 
 export default function VideoExplainer() {
   const { theme } = useTheme();
@@ -166,7 +166,7 @@ export default function VideoExplainer() {
               </button>
 
               <span className="text-white/60 text-xs flex-1">
-                VaultGenesis Explainer · 1:21
+                VaultGenesis Explainer · 0:36
               </span>
 
               <button
