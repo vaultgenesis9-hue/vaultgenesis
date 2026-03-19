@@ -2,6 +2,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import HowItWorks from "@/components/HowItWorks";
+import VideoExplainer from "@/components/VideoExplainer";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Home() {
@@ -13,6 +14,7 @@ export default function Home() {
     <div className={`min-h-screen flex flex-col ${isDark ? 'bg-black' : 'bg-[#fafaf8]'}`}>
       <Navbar mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} />
       <HeroSection />
+      <VideoExplainer />
       <HowItWorks />
     </div>
   );

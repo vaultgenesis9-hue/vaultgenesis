@@ -178,3 +178,12 @@
 - [x] Wire AuthModal into Presale buy button: open AuthModal if no wallet and no session
 - [x] Show logged-in username/avatar pill in Navbar when email session is active
 - [x] Add Sign Out option in Navbar mobile menu for session users
+
+## Homepage Video Explainer
+- [x] Write voiceover script (7 scenes, 81 seconds)
+- [x] Generate feminine voiceover audio (gTTS, UK English accent)
+- [x] Render 1,956 frames of 2D black & white kinetic animation (PIL/Python)
+- [x] Compose final MP4 video with audio (ffmpeg, 1280x720, 24fps, 2.6MB)
+- [x] Upload video to CDN
+- [x] Build VideoExplainer React component with custom controls (play/pause/mute/seek/fullscreen)
+- [x] Embed VideoExplainer on homepage between HeroSection and HowItWorks
