@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Volume2, VolumeX, Maximize2 } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 
-const VIDEO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663061635487/hDJwWwsXRADFzVMPvCDuWe/vaultgenesis-explainer-v2_bd201b4f.mp4";
+const VIDEO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663061635487/hDJwWwsXRADFzVMPvCDuWe/vaultgenesis-final_5dc56ce1.mp4";
 
 export default function VideoExplainer() {
   const { theme } = useTheme();
@@ -87,7 +87,7 @@ export default function VideoExplainer() {
             How VaultGenesis Works
           </h2>
           <p className={`mt-3 text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-            A 90-second walkthrough of every feature — from wallet connection to token launch.
+            A 32-second walkthrough of every feature — from wallet connection to token launch.
           </p>
         </div>
 
@@ -166,7 +166,7 @@ export default function VideoExplainer() {
               </button>
 
               <span className="text-white/60 text-xs flex-1">
-                VaultGenesis Explainer · 0:36
+                VaultGenesis Explainer · 0:32
               </span>
 
               <button
@@ -182,7 +182,7 @@ export default function VideoExplainer() {
 
         {/* Caption */}
         <p className={`text-center text-xs mt-4 ${isDark ? "text-gray-600" : "text-gray-400"}`}>
-          🔊 Click play — voiceover included
+          🔊 Click play — turn up the volume
         </p>
       </div>
     </section>
