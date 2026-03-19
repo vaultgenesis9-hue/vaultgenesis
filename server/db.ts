@@ -459,3 +459,36 @@ export async function createEmailUser(data: {
   const rows = await db.select().from(users).where(eq(users.id, insertId)).limit(1);
   return rows[0];
 }
+
+// ─── Email Verification Helpers ──────────────────────────────────────────────
+
+/** Save a verification token for a user (expires in 24 hours) */
+export async function saveVerificationToken(userId: number, token: string): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24h from now
+  await db.update(users)
+    .set({ verificationToken: token, verificationTokenExpiry: expiry })
+    .where(eq(users.id, userId));
+}
+
+/** Find a user by their verification token (returns null if expired or not found) */
+export async function findUserByVerificationToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(users).where(eq(users.verificationToken, token)).limit(1);
+  if (!rows.length) return null;
+  const user = rows[0];
+  // Check expiry
+  if (!user.verificationTokenExpiry || user.verificationTokenExpiry < new Date()) return null;
+  return user;
+}
+
+/** Mark a user's email as verified and clear the token */
+export async function markEmailVerified(userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(users)
+    .set({ emailVerified: 1, verificationToken: null, verificationTokenExpiry: null })
+    .where(eq(users.id, userId));
+}

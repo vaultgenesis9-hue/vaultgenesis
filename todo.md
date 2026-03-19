@@ -138,7 +138,7 @@
 - [x] Add /admin/login route to App.tsx
 
 ## Admin Security & GitHub
-- [ ] Add route guard to /admin — redirect to /admin/login if no valid admin_session cookie
+- [x] Add route guard to /admin — redirect to /admin/login if no valid admin_session cookie
 - [x] Seed default first admin account in the database (username: vaultadmin)
 - [ ] Push project to GitHub via Manus Settings → GitHub export
 
@@ -187,3 +187,25 @@
 - [x] Upload video to CDN
 - [x] Build VideoExplainer React component with custom controls (play/pause/mute/seek/fullscreen)
 - [x] Embed VideoExplainer on homepage between HeroSection and HowItWorks
+
+## Admin Route Guard
+- [x] Add ProtectedAdminRoute wrapper component that checks admin_session before rendering /admin
+- [x] Redirect unauthenticated visitors of /admin to /admin/login
+
+## Email Verification on Sign-Up
+- [x] Add emailVerified and verificationToken columns to users table
+- [x] Push DB migration
+- [x] Add tRPC procedure: auth.sendVerification (generate token, send Resend email with link)
+- [x] Add tRPC procedure: auth.verifyEmail (validate token, set emailVerified=true)
+- [x] Add /verify-email route and VerifyEmail page
+- [x] After register, auto-send verification email and show "Check your inbox" banner
+- [x] Show "Email not verified" warning badge in Navbar/Profile for unverified users
+
+## Real ERC-20 Token Deployment
+- [x] Compile real ERC-20 contract (solc 0.8.20, SimpleERC20.sol)
+- [x] Add wagmi useDeployContract hook in Token Creator for real on-chain deployment
+- [x] Support Ethereum, BSC, Polygon, Sepolia testnet (all configured in wagmi)
+- [x] Show Etherscan/BSCscan/Polygonscan link for deployed token and tx hash
+- [x] Wallet not connected warning and guard in Step 4 Review screen
+- [x] After deploy, send confirmation email via trpc.email.sendTokenDeployed
+- [x] Fix tsconfig target to ES2020 for BigInt support

@@ -29,10 +29,13 @@ import {
   emailExists,
   userUsernameExists,
   createEmailUser,
+  saveVerificationToken,
+  findUserByVerificationToken,
+  markEmailVerified,
 } from "./db";
 import { createHash } from "crypto";
 import { uploadToCloudinary } from "./cloudinary";
-import { sendEmail } from "./email";
+import { sendEmail, sendVerificationEmail } from "./email";
 import { getTxStatus, getWalletBalance, getWalletTransactions, etherscanUrl } from "./etherscan";
 import bcrypt from "bcryptjs";
 // Helper to build Set-Cookie header string manually
@@ -87,7 +90,49 @@ export const appRouter = router({
         const token = await sdk.createSessionToken(user.openId, { name: user.name ?? input.name });
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: 365 * 24 * 60 * 60 * 1000 });
+        // Auto-send verification email (non-blocking — don't fail registration if email fails)
+        try {
+          const { randomBytes } = await import('crypto');
+          const verifyToken = randomBytes(32).toString('hex');
+          await saveVerificationToken(user.id, verifyToken);
+          const origin = ctx.req.headers.origin || ctx.req.headers.host || 'https://vaultgenesis.com';
+          const baseUrl = origin.startsWith('http') ? origin : `https://${origin}`;
+          const verificationUrl = `${baseUrl}/verify-email?token=${verifyToken}`;
+          await sendVerificationEmail(input.email, input.name, verificationUrl);
+        } catch (emailErr) {
+          console.warn('[Register] Failed to send verification email:', emailErr);
+        }
         return { success: true, user: { id: user.id, name: user.name, email: user.email, username: user.username } };
+      }),
+
+    /** Send a verification email to the current user */
+    sendVerification: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        if (!ctx.user.email) {
+          throw new TRPCError({ code: 'BAD_REQUEST', message: 'No email address on file' });
+        }
+        // Generate a secure random token
+        const { randomBytes } = await import('crypto');
+        const token = randomBytes(32).toString('hex');
+        await saveVerificationToken(ctx.user.id, token);
+        // Build verification URL — use request origin or fallback
+        const origin = ctx.req.headers.origin || ctx.req.headers.host || 'https://vaultgenesis.com';
+        const baseUrl = origin.startsWith('http') ? origin : `https://${origin}`;
+        const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
+        await sendVerificationEmail(ctx.user.email, ctx.user.name ?? 'there', verificationUrl);
+        return { success: true };
+      }),
+
+    /** Verify email address using a token from the verification link */
+    verifyEmail: publicProcedure
+      .input(z.object({ token: z.string().min(1) }))
+      .mutation(async ({ input }) => {
+        const user = await findUserByVerificationToken(input.token);
+        if (!user) {
+          throw new TRPCError({ code: 'NOT_FOUND', message: 'Invalid or expired verification link' });
+        }
+        await markEmailVerified(user.id);
+        return { success: true, userId: user.id };
       }),
 
     /** Login with email or username + password */
@@ -360,14 +405,15 @@ export const appRouter = router({
       }),
 
     logout: publicProcedure.mutation(async ({ ctx }) => {
-      ctx.res.clearCookie('admin_session', { httpOnly: true, path: '/' });
+      // Clear admin_session cookie via Set-Cookie header (works in both Express and test mocks)
+      ctx.res.setHeader('Set-Cookie', 'admin_session=; Path=/; HttpOnly; Max-Age=0; SameSite=Lax');
       return { success: true };
     }),
 
     me: publicProcedure.query(async ({ ctx }) => {
-      // Parse cookie from raw header (req.cookies requires cookie-parser middleware)
-      const cookies = parseCookies(ctx.req.headers.cookie || '');
-      const raw = cookies['admin_session'];
+      // Check req.cookies first (Express cookie-parser), then fall back to raw header parsing
+      const raw = (ctx.req as any).cookies?.['admin_session'] ||
+        parseCookies(ctx.req.headers.cookie || '')['admin_session'];
       if (!raw) return null;
       try {
         const data = JSON.parse(Buffer.from(raw, 'base64').toString());

@@ -99,3 +99,30 @@ export async function sendTokenDeployedEmail(
     `,
   });
 }
+
+/**
+ * Send an email verification link to a newly registered user
+ */
+export async function sendVerificationEmail(to: string, name: string, verificationUrl: string): Promise<void> {
+  await sendEmail({
+    to,
+    subject: "Verify your VaultGenesis email",
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; background: #000; color: #fff; padding: 40px; border-radius: 12px;">
+        <h1 style="font-size: 28px; font-weight: 900; margin-bottom: 8px;">Verify Your Email</h1>
+        <p style="color: #aaa; margin-bottom: 24px;">One more step to activate your VaultGenesis account</p>
+        <p>Hi <strong>${name}</strong>,</p>
+        <p>Click the button below to verify your email address. This link expires in 24 hours.</p>
+        <a href="${verificationUrl}" style="display: inline-block; margin-top: 24px; padding: 14px 28px; background: #fff; color: #000; font-weight: 700; text-decoration: none; border-radius: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;">
+          Verify Email
+        </a>
+        <p style="margin-top: 24px; color: #555; font-size: 12px;">
+          Or copy this link into your browser:<br/>
+          <span style="color: #aaa; word-break: break-all;">${verificationUrl}</span>
+        </p>
+        <p style="margin-top: 32px; color: #555; font-size: 12px;">If you didn't create a VaultGenesis account, you can safely ignore this email.</p>
+        <p style="margin-top: 8px; color: #555; font-size: 12px;">VaultGenesis — vaultgenesis.com</p>
+      </div>
+    `,
+  });
+}

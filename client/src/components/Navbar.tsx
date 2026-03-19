@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Menu, X, Wallet, Sun, Moon, LogOut, User } from "lucide-react";
+import { Menu, X, Wallet, Sun, Moon, LogOut, User, MailWarning } from "lucide-react";
 import { useLocation } from "wouter";
 import { useTheme } from "@/contexts/ThemeContext";
 import WalletModal from "./WalletModal";
@@ -104,6 +104,11 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
                 >
                   <User size={14} />
                   <span className="max-w-[80px] truncate">{displayName}</span>
+                  {sessionUser && !sessionUser.emailVerified && (
+                    <span title="Email not verified">
+                      <MailWarning size={13} className="text-yellow-400 shrink-0" />
+                    </span>
+                  )}
                 </button>
                 <button
                   onClick={() => logoutMut.mutate()}

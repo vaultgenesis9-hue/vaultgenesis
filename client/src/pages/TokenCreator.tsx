@@ -1,13 +1,15 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useTheme } from "@/contexts/ThemeContext";
 import Navbar from "@/components/Navbar";
-import { CheckCircle, Upload, ChevronRight, ChevronLeft, Coins, Loader2 } from "lucide-react";
+import { CheckCircle, Upload, ChevronRight, ChevronLeft, Coins, Loader2, ExternalLink, AlertTriangle } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useDeployContract, useWaitForTransactionReceipt, useAccount, useChainId } from "wagmi";
+import { ERC20_TOKEN_ABI, ERC20_TOKEN_BYTECODE } from "@/lib/erc20TokenAbi";
 
 const STEPS = ["Basic Info", "Supply & Decimals", "Logo Upload", "Review & Deploy"];
 
@@ -21,21 +23,48 @@ interface FormData {
   logoFile: File | null;
 }
 
+// Chain explorer URLs
+const EXPLORER_URLS: Record<number, string> = {
+  1: "https://etherscan.io",
+  56: "https://bscscan.com",
+  137: "https://polygonscan.com",
+  11155111: "https://sepolia.etherscan.io",
+};
+
+const CHAIN_NAMES: Record<number, string> = {
+  1: "Ethereum Mainnet",
+  56: "BNB Smart Chain",
+  137: "Polygon",
+  11155111: "Sepolia Testnet",
+};
+
 export default function TokenCreator() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const { user } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
-  const [isDeploying, setIsDeploying] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
   const [deployed, setDeployed] = useState(false);
   const [contractAddress, setContractAddress] = useState("");
+  const [deployTxHash, setDeployTxHash] = useState<`0x${string}` | undefined>(undefined);
   const [cloudinaryUrl, setCloudinaryUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const { isConnected } = useAccount();
+  const chainId = useChainId();
   const uploadImageMutation = trpc.upload.image.useMutation();
   const sendEmailMutation = trpc.email.sendTokenDeployed.useMutation();
+
+  // wagmi deploy hook
+  const { deployContract, isPending: isDeployPending, data: deployTxHashData, error: deployError } = useDeployContract();
+
+  // Wait for transaction receipt (contract address)
+  const { data: receipt, isLoading: isWaitingReceipt } = useWaitForTransactionReceipt({
+    hash: deployTxHash,
+  });
+
+  const isDeploying = isDeployPending || isWaitingReceipt;
 
   const [formData, setFormData] = useState<FormData>({
     name: "",
@@ -46,6 +75,46 @@ export default function TokenCreator() {
     logoUrl: "",
     logoFile: null,
   });
+
+  // When tx hash comes in, start waiting for receipt
+  useEffect(() => {
+    if (deployTxHashData) {
+      setDeployTxHash(deployTxHashData);
+      toast.info("Transaction submitted! Waiting for confirmation...");
+    }
+  }, [deployTxHashData]);
+
+  // When receipt arrives, extract contract address
+  useEffect(() => {
+    if (receipt?.contractAddress) {
+      const addr = receipt.contractAddress;
+      setContractAddress(addr);
+      setDeployed(true);
+      toast.success(`Token "${formData.name}" deployed successfully!`);
+
+      // Send confirmation email if user has an email on file
+      if (user?.email) {
+        sendEmailMutation.mutate({
+          to: user.email,
+          tokenName: formData.name,
+          tokenSymbol: formData.symbol,
+          txHash: deployTxHashData ?? addr,
+        });
+      }
+    }
+  }, [receipt]);
+
+  // Handle deploy errors
+  useEffect(() => {
+    if (deployError) {
+      const msg = deployError.message || "Deployment failed";
+      if (msg.includes("User rejected") || msg.includes("user rejected")) {
+        toast.error("Transaction rejected by wallet");
+      } else {
+        toast.error(`Deployment failed: ${msg.slice(0, 120)}`);
+      }
+    }
+  }, [deployError]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -58,23 +127,21 @@ export default function TokenCreator() {
       toast.error("Logo must be under 2MB");
       return;
     }
-    // Show local preview immediately
     const localUrl = URL.createObjectURL(file);
     setFormData({ ...formData, logoFile: file, logoUrl: localUrl });
 
-    // Upload to Cloudinary in background
     setIsUploadingLogo(true);
     try {
       const reader = new FileReader();
       reader.onloadend = async () => {
-        const dataUri = reader.result as string; // full data URI e.g. data:image/png;base64,...
+        const dataUri = reader.result as string;
         const result = await uploadImageMutation.mutateAsync({
           dataUri,
           folder: 'token-logos',
         });
         setCloudinaryUrl(result.url);
         setFormData(prev => ({ ...prev, logoUrl: result.url }));
-        toast.success("Logo uploaded to Cloudinary");
+        toast.success("Logo uploaded");
         setIsUploadingLogo(false);
       };
       reader.readAsDataURL(file);
@@ -107,34 +174,31 @@ export default function TokenCreator() {
 
   const prevStep = () => setCurrentStep(s => Math.max(s - 1, 0));
 
-  const handleDeploy = async () => {
+  const handleDeploy = () => {
+    if (!isConnected) {
+      toast.error("Please connect your wallet first");
+      return;
+    }
     if (isUploadingLogo) {
       toast.error("Please wait for logo upload to finish");
       return;
     }
-    setIsDeploying(true);
-    try {
-      // Simulate blockchain deployment (replace with real contract call when ready)
-      await new Promise(r => setTimeout(r, 2500));
-      const mockAddress = "0x" + Array.from({ length: 40 }, () => "0123456789abcdef"[Math.floor(Math.random() * 16)]).join("");
-      setContractAddress(mockAddress);
-      setDeployed(true);
-      toast.success(`Token "${formData.name}" deployed successfully!`);
 
-      // Send confirmation email if user has an email on file
-      if (user?.email) {
-        sendEmailMutation.mutate({
-          to: user.email,
-          tokenName: formData.name,
-          tokenSymbol: formData.symbol,
-          txHash: mockAddress,
-        });
-      }
-    } catch (err) {
-      toast.error("Deployment failed. Please try again.");
-    } finally {
-      setIsDeploying(false);
-    }
+    const decimals = Number(formData.decimals);
+    const supply = BigInt(formData.initialSupply);
+    // Raw supply = supply * 10^decimals
+    const rawSupply = supply * (10n ** BigInt(decimals));
+
+    deployContract({
+      abi: ERC20_TOKEN_ABI,
+      bytecode: ERC20_TOKEN_BYTECODE,
+      args: [
+        formData.name,
+        formData.symbol,
+        decimals,
+        rawSupply,
+      ],
+    });
   };
 
   const resetForm = () => {
@@ -142,7 +206,12 @@ export default function TokenCreator() {
     setCurrentStep(0);
     setDeployed(false);
     setContractAddress("");
+    setDeployTxHash(undefined);
+    setCloudinaryUrl("");
   };
+
+  const explorerBase = EXPLORER_URLS[chainId] ?? "https://etherscan.io";
+  const chainName = CHAIN_NAMES[chainId] ?? `Chain ${chainId}`;
 
   const inputClass = `w-full rounded-xl border px-4 py-3 text-sm focus:outline-none focus:ring-2 transition-all ${
     isDark
@@ -179,8 +248,16 @@ export default function TokenCreator() {
             TOKEN CREATOR
           </h1>
           <p className={`text-sm sm:text-base mb-10 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-            Deploy your meme coin in minutes
+            Deploy your ERC-20 token on-chain in minutes
           </p>
+
+          {/* Wallet not connected warning */}
+          {!isConnected && (
+            <div className={`mb-6 rounded-xl border p-4 flex items-center gap-3 ${isDark ? 'bg-yellow-900/20 border-yellow-700/30 text-yellow-400' : 'bg-yellow-50 border-yellow-300 text-yellow-700'}`}>
+              <AlertTriangle className="w-5 h-5 shrink-0" />
+              <p className="text-sm font-medium">Connect your wallet to deploy tokens on-chain. You can still fill out the form first.</p>
+            </div>
+          )}
 
           {/* Success Screen */}
           {deployed ? (
@@ -188,7 +265,7 @@ export default function TokenCreator() {
               <CheckCircle className="w-16 h-16 text-green-400 mx-auto mb-4" />
               <h2 className={`text-2xl font-black mb-2 ${isDark ? 'text-white' : 'text-black'}`}>Token Deployed!</h2>
               <p className={`text-sm mb-6 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                Your token <strong>{formData.name} ({formData.symbol})</strong> has been successfully deployed to the blockchain.
+                Your token <strong>{formData.name} ({formData.symbol})</strong> has been successfully deployed on <strong>{chainName}</strong>.
               </p>
 
               {/* Token Preview Card */}
@@ -209,13 +286,42 @@ export default function TokenCreator() {
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div><p className={isDark ? 'text-gray-500' : 'text-gray-500'}>Supply</p><p className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{Number(formData.initialSupply).toLocaleString()}</p></div>
                   <div><p className={isDark ? 'text-gray-500' : 'text-gray-500'}>Decimals</p><p className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{formData.decimals}</p></div>
-                  <div className="col-span-2"><p className={isDark ? 'text-gray-500' : 'text-gray-500'}>Contract Address</p><p className={`font-mono text-xs break-all font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{contractAddress}</p></div>
+                  <div className="col-span-2">
+                    <p className={isDark ? 'text-gray-500' : 'text-gray-500'}>Contract Address</p>
+                    <p className={`font-mono text-xs break-all font-bold ${isDark ? 'text-green-400' : 'text-green-600'}`}>{contractAddress}</p>
+                  </div>
+                  {deployTxHash && (
+                    <div className="col-span-2">
+                      <p className={isDark ? 'text-gray-500' : 'text-gray-500'}>Transaction</p>
+                      <a
+                        href={`${explorerBase}/tx/${deployTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`font-mono text-xs break-all font-bold flex items-center gap-1 hover:underline ${isDark ? 'text-blue-400' : 'text-blue-600'}`}
+                      >
+                        {deployTxHash.slice(0, 20)}...{deployTxHash.slice(-10)}
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                      </a>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <Button onClick={resetForm} className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}>
-                Create Another Token
-              </Button>
+              <div className="flex gap-3">
+                {contractAddress && (
+                  <a
+                    href={`${explorerBase}/address/${contractAddress}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide border transition-all ${isDark ? 'border-white/20 text-white hover:bg-white/10' : 'border-black/20 text-black hover:bg-black/5'}`}
+                  >
+                    View on Explorer <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                <Button onClick={resetForm} className={`flex-1 rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}>
+                  Create Another Token
+                </Button>
+              </div>
             </div>
           ) : (
             <>
@@ -274,12 +380,12 @@ export default function TokenCreator() {
                     <div>
                       <Label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Initial Supply *</Label>
                       <Input name="initialSupply" type="number" value={formData.initialSupply} onChange={handleChange} placeholder="e.g. 1000000000" className={inputClass} />
-                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Total number of tokens to mint</p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Total number of tokens to mint to your wallet</p>
                     </div>
                     <div>
                       <Label className={`text-xs font-bold uppercase tracking-wider mb-2 block ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Decimals</Label>
                       <Input name="decimals" type="number" value={formData.decimals} onChange={handleChange} min="0" max="18" className={inputClass} />
-                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Recommended: 9 (Solana) or 18 (EVM). Range: 0–18</p>
+                      <p className={`text-xs mt-1 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>Standard EVM: 18 decimals. Range: 0–18</p>
                     </div>
                     {/* Live Preview */}
                     {formData.name && formData.symbol && formData.initialSupply && (
@@ -312,14 +418,14 @@ export default function TokenCreator() {
                       {isUploadingLogo && (
                         <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-black/30 z-10">
                           <Loader2 className="w-8 h-8 text-white animate-spin" />
-                          <span className="ml-2 text-white text-sm font-semibold">Uploading to Cloudinary...</span>
+                          <span className="ml-2 text-white text-sm font-semibold">Uploading...</span>
                         </div>
                       )}
                       {formData.logoUrl ? (
                         <div className="flex flex-col items-center gap-3">
                           <img src={formData.logoUrl} alt="Token logo preview" className="w-24 h-24 rounded-full object-cover border-4 border-white/20" />
                           <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
-                            {cloudinaryUrl ? '✅ Uploaded to Cloudinary' : 'Click to change logo'}
+                            {cloudinaryUrl ? '✅ Uploaded' : 'Click to change logo'}
                           </p>
                         </div>
                       ) : (
@@ -358,6 +464,7 @@ export default function TokenCreator() {
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div><p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Initial Supply</p><p className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{Number(formData.initialSupply).toLocaleString()}</p></div>
                         <div><p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Decimals</p><p className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{formData.decimals}</p></div>
+                        <div><p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Network</p><p className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{chainName}</p></div>
                         {formData.description && (
                           <div className="col-span-2"><p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Description</p><p className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{formData.description}</p></div>
                         )}
@@ -365,17 +472,41 @@ export default function TokenCreator() {
                     </div>
 
                     <div className={`rounded-xl border p-4 text-sm ${isDark ? 'bg-yellow-900/20 border-yellow-700/30 text-yellow-400' : 'bg-yellow-50 border-yellow-300 text-yellow-700'}`}>
-                      ⚠️ Deploying a token is irreversible. Please review all details carefully before proceeding.
+                      ⚠️ Deploying a token is irreversible. You will need ETH/BNB/MATIC for gas fees. Please review all details carefully.
                     </div>
+
+                    {!isConnected && (
+                      <div className={`rounded-xl border p-4 text-sm ${isDark ? 'bg-red-900/20 border-red-700/30 text-red-400' : 'bg-red-50 border-red-300 text-red-700'}`}>
+                        🔌 No wallet connected. Please connect your wallet from the top navigation before deploying.
+                      </div>
+                    )}
+
+                    {/* Deploy status */}
+                    {isDeployPending && (
+                      <div className={`rounded-xl border p-4 text-sm flex items-center gap-3 ${isDark ? 'bg-blue-900/20 border-blue-700/30 text-blue-400' : 'bg-blue-50 border-blue-300 text-blue-700'}`}>
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        Confirm the transaction in your wallet...
+                      </div>
+                    )}
+                    {isWaitingReceipt && deployTxHash && (
+                      <div className={`rounded-xl border p-4 text-sm flex items-center gap-3 ${isDark ? 'bg-blue-900/20 border-blue-700/30 text-blue-400' : 'bg-blue-50 border-blue-300 text-blue-700'}`}>
+                        <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+                        Waiting for confirmation on {chainName}...
+                        <a href={`${explorerBase}/tx/${deployTxHash}`} target="_blank" rel="noopener noreferrer" className="underline ml-auto shrink-0">View tx</a>
+                      </div>
+                    )}
 
                     <Button
                       onClick={handleDeploy}
-                      disabled={isDeploying}
-                      className={`w-full rounded-lg py-2 px-4 font-semibold text-xs uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200' : 'bg-black text-white hover:bg-gray-800'}`}
+                      disabled={isDeploying || !isConnected}
+                      className={`w-full rounded-lg py-3 px-4 font-bold text-sm uppercase tracking-wide ${isDark ? 'bg-white text-black hover:bg-gray-200 disabled:opacity-40' : 'bg-black text-white hover:bg-gray-800 disabled:opacity-40'}`}
                     >
                       {isDeploying ? (
-                        <span className="flex items-center gap-2"><span className="animate-spin">⟳</span> Deploying...</span>
-                      ) : "Deploy Token"}
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          {isDeployPending ? "Confirm in Wallet..." : "Deploying..."}
+                        </span>
+                      ) : "Deploy Token On-Chain"}
                     </Button>
                   </div>
                 )}

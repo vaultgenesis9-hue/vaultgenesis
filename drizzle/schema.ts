@@ -13,6 +13,10 @@ export const users = mysqlTable("users", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
+  emailVerified: int("emailVerified").default(0).notNull(), // 0 = unverified, 1 = verified
+  verificationToken: varchar("verificationToken", { length: 128 }),
+  verificationTokenExpiry: timestamp("verificationTokenExpiry"),
+  isBanned: int("isBanned").default(0).notNull(), // 0 = active, 1 = banned
 });
 
 export type User = typeof users.$inferSelect;
