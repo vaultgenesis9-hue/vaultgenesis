@@ -19,10 +19,15 @@ export default function AdminLogin() {
     }
   }, [adminSession, navigate]);
 
+  const utils = trpc.useUtils();
+
   const loginMutation = trpc.adminAuth.login.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       toast.success(`Welcome back, ${data.name}!`);
-      navigate("/admin");
+      // Invalidate all queries so the new admin session cookie is picked up
+      await utils.invalidate();
+      // Use full page navigation so the browser sends the new cookie on the next request
+      window.location.href = '/admin';
     },
     onError: (err) => {
       toast.error(err.message || "Invalid credentials");

