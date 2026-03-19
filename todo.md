@@ -209,3 +209,7 @@
 - [x] Wallet not connected warning and guard in Step 4 Review screen
 - [x] After deploy, send confirmation email via trpc.email.sendTokenDeployed
 - [x] Fix tsconfig target to ES2020 for BigInt support
+
+## Alchemy RPC Integration
+- [x] Update wagmi config to use Alchemy RPC for Ethereum mainnet and Sepolia (VITE_ALCHEMY_API_KEY)
+- [x] Graceful fallback to public RPC if API key not set
