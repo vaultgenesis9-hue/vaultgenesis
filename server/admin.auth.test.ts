@@ -6,6 +6,7 @@ function createPublicContext(): TrpcContext {
   const setCookieValues: string[] = [];
   return {
     user: null,
+    isAdminSession: false,
     req: {
       cookies: {},
       headers: {},
@@ -42,6 +43,7 @@ describe("adminAuth procedures", () => {
 
     const ctx: TrpcContext = {
       user: null,
+    isAdminSession: false,
       req: {
         cookies: { admin_session: encoded },
         headers: {},
@@ -64,6 +66,7 @@ describe("adminAuth procedures", () => {
     const setCookieValues: string[] = [];
     const ctx: TrpcContext = {
       user: null,
+    isAdminSession: false,
       req: {
         cookies: { admin_session: "some_session" },
         headers: {},

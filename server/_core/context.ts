@@ -8,38 +8,41 @@ export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
   user: User | null;
+  isAdminSession: boolean;
 };
 
 export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
   let user: User | null = null;
+  let isAdminSession = false;
 
-  // Check admin_session cookie FIRST — it takes priority over OAuth session
-  // This allows admins to access admin procedures even when also logged in as a regular user
+  // Try regular OAuth/email session FIRST — this is the primary user session
   try {
-    const cookies = parseCookieHeader(opts.req.headers.cookie || '');
-    const raw = cookies['admin_session'];
-    if (raw) {
-      const data = JSON.parse(Buffer.from(raw, 'base64').toString()) as { adminId: number; userId: number; role: string; name: string };
-      if (data?.userId) {
-        const adminUser = await getUserById(data.userId);
-        if (adminUser) {
-          user = adminUser;
-        }
-      }
-    }
-  } catch {
-    // Invalid admin session cookie — ignore
+    user = await sdk.authenticateRequest(opts.req);
+  } catch (error) {
+    // Authentication is optional for public procedures.
+    user = null;
   }
 
-  // Fall back to OAuth/email session if no admin session
+  // If no regular user session, check admin_session cookie as fallback
+  // The admin panel uses its own session separate from the regular user session
   if (!user) {
     try {
-      user = await sdk.authenticateRequest(opts.req);
-    } catch (error) {
-      // Authentication is optional for public procedures.
-      user = null;
+      const cookies = parseCookieHeader(opts.req.headers.cookie || '');
+      const raw = cookies['admin_session'];
+      if (raw) {
+        const data = JSON.parse(Buffer.from(raw, 'base64').toString()) as { adminId: number; userId: number; role: string; name: string };
+        if (data?.userId) {
+          const adminUser = await getUserById(data.userId);
+          if (adminUser) {
+            user = adminUser;
+            isAdminSession = true;
+          }
+        }
+      }
+    } catch {
+      // Invalid admin session cookie — ignore
     }
   }
 
@@ -47,5 +50,6 @@ export async function createContext(
     req: opts.req,
     res: opts.res,
     user,
+    isAdminSession,
   };
 }

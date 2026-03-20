@@ -216,6 +216,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultTab={authTab}
+        onSuccess={() => navigate("/profile")}
       />
     </>
   );
