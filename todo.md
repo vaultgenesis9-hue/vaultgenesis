@@ -213,3 +213,15 @@
 ## Alchemy RPC Integration
 - [x] Update wagmi config to use Alchemy RPC for Ethereum mainnet and Sepolia (VITE_ALCHEMY_API_KEY)
 - [x] Graceful fallback to public RPC if API key not set
+
+## Email Verification Gate on Login
+- [x] Block login for unverified users - return specific error code (EMAIL_NOT_VERIFIED)
+- [x] Show "Verify your email" screen in AuthModal after blocked login attempt
+- [x] Add resend verification email button on the blocked screen (auth.resendVerification public procedure)
+- [x] Resend domain verification DNS records added to Unstoppable Domains
+
+## Admin Password Change
+- [x] Add admin password change card in Settings tab
+- [x] Show yellow warning banner prompting default password change
+- [x] Add tRPC adminAuth.changePassword procedure (verifies current password, bcrypt hashes new one)
+- [x] Fix BigInt exponentiation TS error in TokenCreator.tsx (ES2020 compat)

@@ -24,6 +24,7 @@ import {
   updateUserProfile,
   findAdminByUsername,
   updateAdminLastLogin,
+  updateAdminPassword,
   findUserByEmail,
   findUserByUsername,
   emailExists,
@@ -135,6 +136,25 @@ export const appRouter = router({
         return { success: true, userId: user.id };
       }),
 
+    /** Resend verification email by email address (public, rate-limited by user lookup) */
+    resendVerification: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ ctx, input }) => {
+        const user = await findUserByEmail(input.email);
+        // Silently succeed even if user not found to prevent email enumeration
+        if (!user || user.emailVerified) {
+          return { success: true };
+        }
+        const { randomBytes } = await import('crypto');
+        const token = randomBytes(32).toString('hex');
+        await saveVerificationToken(user.id, token);
+        const origin = ctx.req.headers.origin || ctx.req.headers.host || 'https://vaultgenesis.com';
+        const baseUrl = origin.startsWith('http') ? origin : `https://${origin}`;
+        const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
+        await sendVerificationEmail(user.email!, user.name ?? 'there', verificationUrl);
+        return { success: true };
+      }),
+
     /** Login with email or username + password */
     login: publicProcedure
       .input(z.object({
@@ -153,6 +173,10 @@ export const appRouter = router({
         const valid = await bcrypt.compare(input.password, user.passwordHash);
         if (!valid) {
           throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid email/username or password' });
+        }
+        // Block login if email is not verified
+        if (!user.emailVerified) {
+          throw new TRPCError({ code: 'FORBIDDEN', message: 'EMAIL_NOT_VERIFIED' });
         }
         // Create session JWT
         const { sdk } = await import('./_core/sdk');
@@ -422,6 +446,49 @@ export const appRouter = router({
         return null;
       }
     }),
+
+    /** Change admin password — requires current password for verification */
+    changePassword: publicProcedure
+      .input(z.object({
+        currentPassword: z.string().min(1),
+        newPassword: z.string().min(8).max(128),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify admin session
+        const raw = (ctx.req as any).cookies?.['admin_session'] ||
+          parseCookies(ctx.req.headers.cookie || '')['admin_session'];
+        if (!raw) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Not authenticated' });
+        let session: { adminId: number; name: string };
+        try {
+          session = JSON.parse(Buffer.from(raw, 'base64').toString());
+        } catch {
+          throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Invalid session' });
+        }
+        // Load admin record
+        const admin = await findAdminByUsername(
+          (await import('./db').then(m => m.getDb()).then(async db => {
+            if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'DB unavailable' });
+            const { adminCredentials } = await import('../drizzle/schema');
+            const { eq } = await import('drizzle-orm');
+            const rows = await db.select().from(adminCredentials).where(eq(adminCredentials.id, session.adminId)).limit(1);
+            return rows[0]?.username ?? '';
+          }))
+        );
+        if (!admin) throw new TRPCError({ code: 'NOT_FOUND', message: 'Admin account not found' });
+        // Verify current password
+        let valid = false;
+        if (admin.passwordHash.startsWith('$2')) {
+          valid = await bcrypt.compare(input.currentPassword, admin.passwordHash);
+        } else {
+          const sha256Hash = createHash('sha256').update(input.currentPassword).digest('hex');
+          valid = sha256Hash === admin.passwordHash;
+        }
+        if (!valid) throw new TRPCError({ code: 'UNAUTHORIZED', message: 'Current password is incorrect' });
+        // Hash and save new password
+        const newHash = await bcrypt.hash(input.newPassword, 12);
+        await updateAdminPassword(admin.id, newHash);
+        return { success: true };
+      }),
   }),
 
   /** Send transactional emails via Resend */

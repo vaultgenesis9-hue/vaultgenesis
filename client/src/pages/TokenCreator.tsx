@@ -186,8 +186,10 @@ export default function TokenCreator() {
 
     const decimals = Number(formData.decimals);
     const supply = BigInt(formData.initialSupply);
-    // Raw supply = supply * 10^decimals
-    const rawSupply = supply * (10n ** BigInt(decimals));
+    // Raw supply = supply * 10^decimals (avoid ** operator for ES2020 compat)
+    let multiplier = 1n;
+    for (let i = 0; i < decimals; i++) multiplier *= 10n;
+    const rawSupply = supply * multiplier;
 
     deployContract({
       abi: ERC20_TOKEN_ABI,

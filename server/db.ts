@@ -399,6 +399,14 @@ export async function updateAdminLastLogin(credId: number) {
     .where(eq(adminCredentials.id, credId));
 }
 
+export async function updateAdminPassword(credId: number, newPasswordHash: string) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(adminCredentials)
+    .set({ passwordHash: newPasswordHash })
+    .where(eq(adminCredentials.id, credId));
+}
+
 // TODO: add feature queries here as your schema grows.
 
 // ─── Email/Password Auth Helpers ─────────────────────────────────────────────

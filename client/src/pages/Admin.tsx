@@ -203,6 +203,28 @@ export default function Admin() {
   const [announcement, setAnnouncement] = useState("🚀 VaultGenesis presale is now live! Get your VG tokens before they sell out.");
   const [settingsEditing, setSettingsEditing] = useState(false);
 
+  // Password change state
+  const [showPwdForm, setShowPwdForm] = useState(false);
+  const [currentPwd, setCurrentPwd] = useState("");
+  const [newPwd, setNewPwd] = useState("");
+  const [confirmPwd, setConfirmPwd] = useState("");
+  const [showCurrentPwd, setShowCurrentPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [pwdChangeDismissed, setPwdChangeDismissed] = useState(() => {
+    try { return localStorage.getItem('vg_admin_pwd_dismissed') === '1'; } catch { return false; }
+  });
+
+  const changePasswordMut = trpc.adminAuth.changePassword.useMutation({
+    onSuccess: () => {
+      toast.success("Password changed successfully!");
+      setShowPwdForm(false);
+      setCurrentPwd(""); setNewPwd(""); setConfirmPwd("");
+      setPwdChangeDismissed(true);
+      try { localStorage.setItem('vg_admin_pwd_dismissed', '1'); } catch {}
+    },
+    onError: (e) => toast.error(e.message || "Failed to change password"),
+  });
+
   // ─── Derived ───────────────────────────────────────────────────────────────
 
   const filteredUsers = useMemo(() => users.filter(u =>
@@ -1026,6 +1048,108 @@ export default function Admin() {
                 <Button onClick={() => setSettingsEditing(v => !v)} size="sm" className={actionBtn("ghost")}>
                   <Edit2 className="w-3 h-3 mr-1" /> {settingsEditing ? "Cancel" : "Edit Settings"}
                 </Button>
+              </div>
+
+              {/* Default Password Warning Banner */}
+              {!pwdChangeDismissed && (
+                <div className="flex items-start gap-3 px-4 py-3 rounded-xl border border-yellow-700/40 bg-yellow-900/10">
+                  <AlertTriangle className="w-4 h-4 text-yellow-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold text-yellow-400">Security: Change your default admin password</p>
+                    <p className="text-xs text-yellow-400/70 mt-0.5">You are using the default password. Change it immediately to secure your admin account.</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      onClick={() => { setShowPwdForm(true); setActiveTab('settings'); }}
+                      className="text-xs font-bold text-yellow-400 underline hover:text-yellow-300"
+                    >
+                      Change Now
+                    </button>
+                    <button
+                      onClick={() => { setPwdChangeDismissed(true); try { localStorage.setItem('vg_admin_pwd_dismissed', '1'); } catch {} }}
+                      className="text-yellow-400/50 hover:text-yellow-400"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Change Password Card */}
+              <div className={`${cardClass} p-5`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>Admin Password</p>
+                    <p className={`text-xs mt-0.5 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Change your admin account password</p>
+                  </div>
+                  <button
+                    onClick={() => setShowPwdForm(v => !v)}
+                    className={`text-xs font-bold flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all ${isDark ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-black/10 text-black hover:bg-black/20'}`}
+                  >
+                    <Lock className="w-3 h-3" />
+                    {showPwdForm ? 'Cancel' : 'Change Password'}
+                  </button>
+                </div>
+                {showPwdForm && (
+                  <form
+                    onSubmit={e => {
+                      e.preventDefault();
+                      if (newPwd !== confirmPwd) { toast.error('New passwords do not match'); return; }
+                      if (newPwd.length < 8) { toast.error('Password must be at least 8 characters'); return; }
+                      changePasswordMut.mutate({ currentPassword: currentPwd, newPassword: newPwd });
+                    }}
+                    className="space-y-3 mt-2 pt-3 border-t border-inherit"
+                  >
+                    <div>
+                      <label className={`${labelClass} mb-1.5 block`}>Current Password</label>
+                      <div className="relative">
+                        <input
+                          type={showCurrentPwd ? 'text' : 'password'}
+                          value={currentPwd}
+                          onChange={e => setCurrentPwd(e.target.value)}
+                          className={`${inputClass} pr-10`}
+                          placeholder="Enter current password"
+                          required
+                        />
+                        <button type="button" onClick={() => setShowCurrentPwd(v => !v)} className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {showCurrentPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={`${labelClass} mb-1.5 block`}>New Password</label>
+                      <div className="relative">
+                        <input
+                          type={showNewPwd ? 'text' : 'password'}
+                          value={newPwd}
+                          onChange={e => setNewPwd(e.target.value)}
+                          className={`${inputClass} pr-10`}
+                          placeholder="Min 8 characters"
+                          required
+                          minLength={8}
+                        />
+                        <button type="button" onClick={() => setShowNewPwd(v => !v)} className={`absolute right-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+                          {showNewPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={`${labelClass} mb-1.5 block`}>Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={confirmPwd}
+                        onChange={e => setConfirmPwd(e.target.value)}
+                        className={inputClass}
+                        placeholder="Repeat new password"
+                        required
+                      />
+                    </div>
+                    <Button type="submit" size="sm" className={actionBtn('green')} disabled={changePasswordMut.isPending}>
+                      {changePasswordMut.isPending ? <RefreshCw className="w-3 h-3 animate-spin mr-1" /> : <CheckCircle className="w-3 h-3 mr-1" />}
+                      {changePasswordMut.isPending ? 'Saving...' : 'Save New Password'}
+                    </Button>
+                  </form>
+                )}
               </div>
 
               {/* Maintenance Mode */}
