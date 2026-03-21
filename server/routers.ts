@@ -33,6 +33,7 @@ import {
   saveVerificationToken,
   findUserByVerificationToken,
   markEmailVerified,
+  getDashboardOverview,
 } from "./db";
 import { createHash } from "crypto";
 import { uploadToCloudinary } from "./cloudinary";
@@ -514,6 +515,15 @@ export const appRouter = router({
         });
         return { success: true };
       }),
+  }),
+
+  /** User dashboard overview */
+  dashboard: router({
+    overview: protectedProcedure.query(async ({ ctx }) => {
+      const data = await getDashboardOverview(ctx.user.id);
+      if (!data) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to load dashboard data' });
+      return data;
+    }),
   }),
 });
 

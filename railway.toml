@@ -1,0 +1,8 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pnpm install && pnpm vite build --config ./vite.config.ts && pnpm esbuild server/_core/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist"
+
+[deploy]
+startCommand = "node dist/index.js"
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 10

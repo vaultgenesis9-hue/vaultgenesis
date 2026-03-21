@@ -54,8 +54,8 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
   // Determine display name for session user
   const displayName = sessionUser?.name || sessionUser?.username || sessionUser?.email?.split("@")[0];
-  // Show user avatar/name if logged in via email (not wallet)
-  const isEmailUser = sessionUser && sessionUser.loginMethod === "email";
+  // Show user pill if any session user is logged in
+  const isLoggedIn = !!sessionUser;
 
   return (
     <>
@@ -91,10 +91,10 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
             </button>
 
             {/* Auth state: show user pill or Sign In button */}
-            {isEmailUser ? (
+            {isLoggedIn ? (
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => navigate("/profile")}
+                  onClick={() => navigate("/dashboard")}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
                     theme === "dark"
                       ? "bg-white/10 text-white hover:bg-white/20"
@@ -104,7 +104,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
                 >
                   <User size={14} />
                   <span className="max-w-[80px] truncate">{displayName}</span>
-                  {sessionUser && !sessionUser.emailVerified && (
+                  {sessionUser && !sessionUser.emailVerified && sessionUser.loginMethod === 'email' && (
                     <span title="Email not verified">
                       <MailWarning size={13} className="text-yellow-400 shrink-0" />
                     </span>
@@ -168,7 +168,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
               {/* Mobile auth actions */}
               <div className={`border-t pt-4 flex flex-col gap-2 ${theme === "dark" ? "border-white/10" : "border-black/10"}`}>
-                {isEmailUser ? (
+                {isLoggedIn ? (
                   <>
                     <button
                       onClick={() => { navigate("/profile"); setMobileMenuOpen(false); }}
@@ -216,7 +216,7 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         defaultTab={authTab}
-        onSuccess={() => navigate("/profile")}
+        onSuccess={() => navigate("/dashboard")}
       />
     </>
   );

@@ -225,3 +225,18 @@
 - [x] Show yellow warning banner prompting default password change
 - [x] Add tRPC adminAuth.changePassword procedure (verifies current password, bcrypt hashes new one)
 - [x] Fix BigInt exponentiation TS error in TokenCreator.tsx (ES2020 compat)
+
+## User Dashboard
+- [x] Create /dashboard route and Dashboard.tsx page
+- [x] Show account overview (name, email, wallet, verification status)
+- [x] Stats cards: tokens created, staking positions, bot trades count
+- [x] Recent tokens panel with status badges
+- [x] Recent staking positions panel
+- [x] Recent bot trades panel
+- [x] Presale contributions panel
+- [x] Quick access links grid (Token Creator, Presale, Staking, Wallet, Bot Trading, Profile)
+- [x] Add getDashboardOverview backend query (db.ts)
+- [x] Add dashboard.overview tRPC procedure (routers.ts)
+- [x] Redirect to /dashboard after login (Navbar AuthModal onSuccess)
+- [x] Fix navbar: show user name pill for all logged-in users (not just email users)
+- [x] Fix context.ts: regular user session takes priority over admin_session cookie

@@ -1,6 +1,6 @@
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, apiTokens, walletImports, adminCredentials } from "../drizzle/schema";
+import { InsertUser, users, apiTokens, walletImports, adminCredentials, tokens, stakes, botTrades, contributions } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import crypto, { randomBytes } from "crypto";
 
@@ -499,4 +499,34 @@ export async function markEmailVerified(userId: number): Promise<void> {
   await db.update(users)
     .set({ emailVerified: 1, verificationToken: null, verificationTokenExpiry: null })
     .where(eq(users.id, userId));
+}
+
+// ─── Dashboard Overview ───────────────────────────────────────────────────────
+
+/** Fetch all data needed for the user dashboard in one call */
+export async function getDashboardOverview(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [userTokens, activeStakes, recentTrades, recentContributions, tokenCountRows, stakeCountRows, tradeCountRows] = await Promise.all([
+    db.select().from(tokens).where(eq(tokens.creatorId, userId)).orderBy(desc(tokens.createdAt)).limit(5),
+    db.select().from(stakes).where(eq(stakes.userId, userId)).orderBy(desc(stakes.stakedAt)).limit(5),
+    db.select().from(botTrades).where(eq(botTrades.userId, userId)).orderBy(desc(botTrades.createdAt)).limit(5),
+    db.select().from(contributions).where(eq(contributions.userId, userId)).orderBy(desc(contributions.createdAt)).limit(5),
+    db.select({ count: count() }).from(tokens).where(eq(tokens.creatorId, userId)),
+    db.select({ count: count() }).from(stakes).where(eq(stakes.userId, userId)),
+    db.select({ count: count() }).from(botTrades).where(eq(botTrades.userId, userId)),
+  ]);
+
+  return {
+    tokens: userTokens,
+    stakes: activeStakes,
+    trades: recentTrades,
+    contributions: recentContributions,
+    stats: {
+      tokenCount: tokenCountRows[0]?.count ?? 0,
+      stakeCount: stakeCountRows[0]?.count ?? 0,
+      tradeCount: tradeCountRows[0]?.count ?? 0,
+    },
+  };
 }
