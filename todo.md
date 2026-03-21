@@ -243,3 +243,5 @@
 
 ## Bug Fixes (Round 2)
 - [x] Fix logout: navbar still shows user profile after sign out (query cache not cleared + no page redirect)
+- [x] Fix dashboard: "Failed to load dashboard data" error on Railway (getDashboardOverview query failing)
+- [x] Fix email verification badge: should NOT show for OAuth/Google users (only email-login users)

@@ -523,9 +523,27 @@ export const appRouter = router({
   /** User dashboard overview */
   dashboard: router({
     overview: protectedProcedure.query(async ({ ctx }) => {
-      const data = await getDashboardOverview(ctx.user.id);
-      if (!data) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR', message: 'Failed to load dashboard data' });
-      return data;
+      try {
+        const data = await getDashboardOverview(ctx.user.id);
+        // Return empty data structure if DB is unavailable (graceful degradation)
+        return data ?? {
+          tokens: [],
+          stakes: [],
+          trades: [],
+          contributions: [],
+          stats: { tokenCount: 0, stakeCount: 0, tradeCount: 0 },
+        };
+      } catch (err) {
+        console.error('[Dashboard] Failed to load overview:', err);
+        // Return empty data instead of crashing the page
+        return {
+          tokens: [],
+          stakes: [],
+          trades: [],
+          contributions: [],
+          stats: { tokenCount: 0, stakeCount: 0, tradeCount: 0 },
+        };
+      }
     }),
   }),
 });

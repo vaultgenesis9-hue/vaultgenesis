@@ -1,0 +1,46 @@
+{
+  "query": "SELECT id, name, username, email, emailVerified, loginMethod, role FROM users ORDER BY createdAt DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Bp9wLmu56omi7o1.675248d438e0 --database hDJwWwsXRADFzVMPvCDuWe --execute SELECT id, name, username, email, emailVerified, loginMethod, role FROM users ORDER BY createdAt DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "660040",
+      "name": "QA Tester",
+      "username": "qatester99",
+      "email": "qa@test.com",
+      "emailVerified": "0",
+      "loginMethod": "email",
+      "role": "user"
+    },
+    {
+      "id": "450006",
+      "name": "Test User",
+      "username": "testuser123",
+      "email": "testuser@vaultgenesis.io",
+      "emailVerified": "0",
+      "loginMethod": "email",
+      "role": "user"
+    },
+    {
+      "id": "210001",
+      "name": "VaultGenesis Admin",
+      "username": "NULL",
+      "email": "admin@vaultgenesis.com",
+      "emailVerified": "0",
+      "loginMethod": "credentials",
+      "role": "admin"
+    },
+    {
+      "id": "1",
+      "name": "stone jr stone",
+      "username": "NULL",
+      "email": "stonesark97@gmail.com",
+      "emailVerified": "0",
+      "loginMethod": "google",
+      "role": "admin"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\tusername\temail\temailVerified\tloginMethod\trole\n660040\tQA Tester\tqatester99\tqa@test.com\t0\temail\tuser\n450006\tTest User\ttestuser123\ttestuser@vaultgenesis.io\t0\temail\tuser\n210001\tVaultGenesis Admin\tNULL\tadmin@vaultgenesis.com\t0\tcredentials\tadmin\n1\tstone jr stone\tNULL\tstonesark97@gmail.com\t0\tgoogle\tadmin\n",
+  "stderr": "",
+  "execution_time_ms": 68
+}

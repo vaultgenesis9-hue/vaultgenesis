@@ -1,0 +1,40 @@
+{
+  "query": "SHOW TABLES;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user Bp9wLmu56omi7o1.675248d438e0 --database hDJwWwsXRADFzVMPvCDuWe --execute SHOW TABLES;",
+  "rows": [
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "__drizzle_migrations"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "adminCredentials"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "apiTokens"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "botTrades"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "contributions"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "presales"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "stakes"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "tokens"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "users"
+    },
+    {
+      "Tables_in_hDJwWwsXRADFzVMPvCDuWe": "walletImports"
+    }
+  ],
+  "messages": [],
+  "stdout": "Tables_in_hDJwWwsXRADFzVMPvCDuWe\n__drizzle_migrations\nadminCredentials\napiTokens\nbotTrades\ncontributions\npresales\nstakes\ntokens\nusers\nwalletImports\n",
+  "stderr": "",
+  "execution_time_ms": 345
+}

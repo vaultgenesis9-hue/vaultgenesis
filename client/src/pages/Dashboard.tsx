@@ -113,14 +113,16 @@ export default function Dashboard() {
                   {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
                 </span>
               )}
-              {user?.emailVerified ? (
-                <span className="ml-3 inline-flex items-center gap-1 text-green-400 text-xs">
-                  <ShieldCheck size={12} /> Verified
-                </span>
-              ) : (
-                <span className="ml-3 inline-flex items-center gap-1 text-yellow-400 text-xs">
-                  <AlertCircle size={12} /> Email not verified
-                </span>
+              {user?.loginMethod === 'email' && (
+                user?.emailVerified ? (
+                  <span className="ml-3 inline-flex items-center gap-1 text-green-400 text-xs">
+                    <ShieldCheck size={12} /> Verified
+                  </span>
+                ) : (
+                  <span className="ml-3 inline-flex items-center gap-1 text-yellow-400 text-xs">
+                    <AlertCircle size={12} /> Email not verified
+                  </span>
+                )
               )}
             </p>
           </div>
