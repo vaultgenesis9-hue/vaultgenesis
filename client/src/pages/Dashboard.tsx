@@ -1,6 +1,8 @@
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useEffect } from "react";
 import {
   Coins,
   TrendingUp,
@@ -23,8 +25,21 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
 
-  const { data: user } = trpc.auth.me.useQuery();
-  const { data: overview, isLoading, error } = trpc.dashboard.overview.useQuery();
+  // Use useAuth for reliable auth state with proper loading handling
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
+
+  // Redirect to home if not authenticated after auth check completes
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate("/");
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
+  const { data: overview, isLoading, error } = trpc.dashboard.overview.useQuery(
+    undefined,
+    // Only fetch when user is authenticated to avoid 401 errors
+    { enabled: isAuthenticated }
+  );
 
   const displayName = user?.name || user?.username || user?.email?.split("@")[0] || "User";
   const initials = displayName.slice(0, 2).toUpperCase();
@@ -90,6 +105,24 @@ export default function Dashboard() {
 
   const formatDate = (d: Date | string) =>
     new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  // Show loading spinner while auth state is being determined
+  if (authLoading) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${bgPage}`}>
+        <Loader2 className="animate-spin text-gray-400" size={32} />
+      </div>
+    );
+  }
+
+  // If not authenticated, the useEffect above will redirect to home
+  if (!isAuthenticated) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${bgPage}`}>
+        <Loader2 className="animate-spin text-gray-400" size={32} />
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen pt-24 pb-16 px-4 ${bgPage}`}>

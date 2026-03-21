@@ -245,3 +245,5 @@
 - [x] Fix logout: navbar still shows user profile after sign out (query cache not cleared + no page redirect)
 - [x] Fix dashboard: "Failed to load dashboard data" error on Railway (getDashboardOverview query failing)
 - [x] Fix email verification badge: should NOT show for OAuth/Google users (only email-login users)
+- [x] Fix dashboard 401: Dashboard now uses useAuth hook, only calls overview when authenticated, redirects to home when not logged in
+- [x] Fix welcome message: Dashboard now uses useAuth hook which returns proper user data with name/username
