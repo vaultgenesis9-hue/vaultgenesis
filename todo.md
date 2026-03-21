@@ -240,3 +240,6 @@
 - [x] Redirect to /dashboard after login (Navbar AuthModal onSuccess)
 - [x] Fix navbar: show user name pill for all logged-in users (not just email users)
 - [x] Fix context.ts: regular user session takes priority over admin_session cookie
+
+## Bug Fixes (Round 2)
+- [x] Fix logout: navbar still shows user profile after sign out (query cache not cleared + no page redirect)

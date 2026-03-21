@@ -57,7 +57,10 @@ export const appRouter = router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      // Clear the regular user session cookie
+      ctx.res.clearCookie(COOKIE_NAME, cookieOptions);
+      // Also clear admin_session so admin users are fully logged out from the main site
+      ctx.res.clearCookie('admin_session', { path: '/', httpOnly: true, sameSite: 'none', secure: cookieOptions.secure });
       return {
         success: true,
       } as const;

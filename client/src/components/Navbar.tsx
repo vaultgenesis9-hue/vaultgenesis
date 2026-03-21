@@ -36,9 +36,15 @@ export default function Navbar({ mobileMenuOpen, setMobileMenuOpen }: NavbarProp
 
   const logoutMut = trpc.auth.logout.useMutation({
     onSuccess: () => {
+      // Immediately clear the cached user so the navbar updates right away
+      utils.auth.me.setData(undefined, null);
       utils.auth.me.invalidate();
       toast.info("Signed out");
-      setTimeout(() => window.location.reload(), 300);
+      // Navigate to home page after a short delay
+      setTimeout(() => {
+        navigate("/");
+        window.location.href = "/";
+      }, 300);
     },
   });
 
