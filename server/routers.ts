@@ -32,6 +32,8 @@ import {
   markEmailVerified,
   getDashboardOverview,
   getAdminOverviewStats,
+  createTokenRecord,
+  listAllTokens,
   listDepositWallets,
   listActiveDepositWallets,
   createDepositWallet,
@@ -513,6 +515,32 @@ export const appRouter = router({
           stats: { tokenCount: 0, stakeCount: 0, tradeCount: 0 },
         };
       }
+    }),
+  }),
+
+  /**
+   * Real record of on-chain token deployments (Token Creator does a real ERC20
+   * deploy through the user's wallet; this just saves a row so the admin
+   * dashboard has something real to list instead of demo data).
+   */
+  tokens: router({
+    recordDeployment: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        symbol: z.string().min(1),
+        description: z.string().optional(),
+        decimals: z.number(),
+        initialSupply: z.number(),
+        logoUrl: z.string().optional(),
+        contractAddress: z.string().min(1),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        await createTokenRecord({ creatorId: ctx.user.id, ...input });
+        return { success: true };
+      }),
+    listAll: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return listAllTokens();
     }),
   }),
 

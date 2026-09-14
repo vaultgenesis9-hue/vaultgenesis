@@ -691,6 +691,40 @@ export async function getAdminOverviewStats() {
   };
 }
 
+// ─── Token creation records (real on-chain deploys, persisted for the admin dashboard) ─
+
+export async function createTokenRecord(data: {
+  creatorId: number;
+  name: string;
+  symbol: string;
+  description?: string;
+  decimals: number;
+  initialSupply: number;
+  logoUrl?: string;
+  contractAddress: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  await db.insert(tokens).values({
+    creatorId: data.creatorId,
+    name: data.name,
+    symbol: data.symbol,
+    description: data.description,
+    decimals: data.decimals,
+    initialSupply: data.initialSupply,
+    logoUrl: data.logoUrl,
+    contractAddress: data.contractAddress,
+    status: "deployed",
+  });
+  return true;
+}
+
+export async function listAllTokens() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(tokens).orderBy(desc(tokens.createdAt));
+}
+
 // ─── Deposit Wallet Helpers (admin-managed public addresses) ───────────────
 
 export async function listDepositWallets() {

@@ -55,6 +55,7 @@ export default function TokenCreator() {
   const chainId = useChainId();
   const uploadImageMutation = trpc.upload.image.useMutation();
   const sendEmailMutation = trpc.email.sendTokenDeployed.useMutation();
+  const recordDeploymentMutation = trpc.tokens.recordDeployment.useMutation();
 
   // wagmi deploy hook
   const { deployContract, isPending: isDeployPending, data: deployTxHashData, error: deployError } = useDeployContract();
@@ -91,6 +92,21 @@ export default function TokenCreator() {
       setContractAddress(addr);
       setDeployed(true);
       toast.success(`Token "${formData.name}" deployed successfully!`);
+
+      // Save a record of this real deployment so it shows up for the user and
+      // in the admin dashboard — only possible when signed in, since a token
+      // record needs an owning account.
+      if (user?.id) {
+        recordDeploymentMutation.mutate({
+          name: formData.name,
+          symbol: formData.symbol,
+          description: formData.description || undefined,
+          decimals: Number(formData.decimals),
+          initialSupply: Number(formData.initialSupply),
+          logoUrl: cloudinaryUrl || formData.logoUrl || undefined,
+          contractAddress: addr,
+        });
+      }
 
       // Send confirmation email if user has an email on file
       if (user?.email) {

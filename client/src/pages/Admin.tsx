@@ -25,72 +25,6 @@ interface UserRow {
   role: "user" | "admin"; joined: string; status: "active" | "banned";
   totalTrades: number; volume: string; lastActive: string;
 }
-interface TxRow {
-  id: number; type: "stake" | "unstake" | "buy" | "sell" | "transfer";
-  wallet: string; amount: string; token: string;
-  status: "completed" | "pending" | "failed"; time: string; hash: string;
-}
-interface TokenRow {
-  id: number; name: string; symbol: string; creator: string;
-  supply: string; status: "deployed" | "pending" | "failed" | "suspended";
-  created: string; holders: number; volume: string;
-}
-interface BotRow {
-  id: number; name: string; owner: string; strategy: string;
-  status: "active" | "paused" | "stopped"; profit: string;
-  trades: number; allocated: string; winRate: string;
-}
-interface StakingPool {
-  id: number; token: string; symbol: string; apy: number;
-  totalStaked: string; stakers: number; enabled: boolean;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_USERS: UserRow[] = [
-  { id: 1, name: "Alice Chen", wallet: "0x1a2b...3c4d", email: "alice@example.com", role: "admin", joined: "Jan 12, 2025", status: "active", totalTrades: 142, volume: "$48,200", lastActive: "2m ago" },
-  { id: 2, name: "Bob Smith", wallet: "0x5e6f...7a8b", email: "bob@example.com", role: "user", joined: "Feb 3, 2025", status: "active", totalTrades: 87, volume: "$12,400", lastActive: "1h ago" },
-  { id: 3, name: "Carol Davis", wallet: "0x9c0d...1e2f", email: "carol@example.com", role: "user", joined: "Feb 18, 2025", status: "active", totalTrades: 23, volume: "$3,100", lastActive: "3h ago" },
-  { id: 4, name: "Dave Wilson", wallet: "0x3a4b...5c6d", email: "dave@example.com", role: "user", joined: "Mar 1, 2025", status: "banned", totalTrades: 5, volume: "$800", lastActive: "2d ago" },
-  { id: 5, name: "Eve Martinez", wallet: "0x7e8f...9a0b", email: "eve@example.com", role: "user", joined: "Mar 2, 2025", status: "active", totalTrades: 61, volume: "$9,750", lastActive: "30m ago" },
-  { id: 6, name: "Frank Lee", wallet: "0xab12...cd34", email: "frank@example.com", role: "user", joined: "Mar 5, 2025", status: "active", totalTrades: 34, volume: "$5,600", lastActive: "5h ago" },
-  { id: 7, name: "Grace Kim", wallet: "0xef56...gh78", email: "grace@example.com", role: "user", joined: "Mar 8, 2025", status: "active", totalTrades: 19, volume: "$2,200", lastActive: "1d ago" },
-];
-
-const MOCK_TXS: TxRow[] = [
-  { id: 1, type: "buy", wallet: "0x1a2b...3c4d", amount: "$1,200", token: "VG", status: "completed", time: "2m ago", hash: "0xabc...001" },
-  { id: 2, type: "stake", wallet: "0x5e6f...7a8b", amount: "50,000 VG", token: "VG", status: "completed", time: "8m ago", hash: "0xabc...002" },
-  { id: 3, type: "sell", wallet: "0x9c0d...1e2f", amount: "$450", token: "USDC", status: "pending", time: "15m ago", hash: "0xabc...003" },
-  { id: 4, type: "transfer", wallet: "0x3a4b...5c6d", amount: "2.5 ETH", token: "ETH", status: "completed", time: "32m ago", hash: "0xabc...004" },
-  { id: 5, type: "unstake", wallet: "0x7e8f...9a0b", amount: "10,000 VG", token: "VG", status: "failed", time: "1h ago", hash: "0xabc...005" },
-  { id: 6, type: "buy", wallet: "0x1a2b...3c4d", amount: "$800", token: "VG", status: "completed", time: "2h ago", hash: "0xabc...006" },
-  { id: 7, type: "stake", wallet: "0xab12...cd34", amount: "25,000 VG", token: "VG", status: "completed", time: "3h ago", hash: "0xabc...007" },
-  { id: 8, type: "sell", wallet: "0xef56...gh78", amount: "$320", token: "USDC", status: "completed", time: "4h ago", hash: "0xabc...008" },
-];
-
-const MOCK_TOKENS: TokenRow[] = [
-  { id: 1, name: "Vault Genesis", symbol: "VG", creator: "0x1a2b...3c4d", supply: "1,000,000,000", status: "deployed", created: "Jan 12, 2025", holders: 1247, volume: "$2.4M" },
-  { id: 2, name: "Moon Coin", symbol: "MOON", creator: "0x5e6f...7a8b", supply: "500,000,000", status: "deployed", created: "Feb 5, 2025", holders: 342, volume: "$180K" },
-  { id: 3, name: "Doge Plus", symbol: "DOGEP", creator: "0x9c0d...1e2f", supply: "2,000,000,000", status: "deployed", created: "Feb 20, 2025", holders: 89, volume: "$42K" },
-  { id: 4, name: "Rocket Token", symbol: "RKT", creator: "0x3a4b...5c6d", supply: "100,000,000", status: "pending", created: "Mar 2, 2025", holders: 0, volume: "$0" },
-  { id: 5, name: "Star Coin", symbol: "STAR", creator: "0x7e8f...9a0b", supply: "750,000,000", status: "failed", created: "Mar 3, 2025", holders: 0, volume: "$0" },
-  { id: 6, name: "Alpha Token", symbol: "ALPHA", creator: "0xab12...cd34", supply: "300,000,000", status: "suspended", created: "Mar 6, 2025", holders: 56, volume: "$8K" },
-];
-
-const MOCK_BOTS: BotRow[] = [
-  { id: 1, name: "Scalping Bot #1", owner: "alice@example.com", strategy: "Scalping", status: "active", profit: "+$2,450", trades: 142, allocated: "$5,000", winRate: "68%" },
-  { id: 2, name: "Arbitrage Bot #1", owner: "alice@example.com", strategy: "Arbitrage", status: "active", profit: "+$4,890", trades: 87, allocated: "$10,000", winRate: "82%" },
-  { id: 3, name: "Momentum Bot #2", owner: "bob@example.com", strategy: "Momentum", status: "paused", profit: "+$320", trades: 23, allocated: "$2,000", winRate: "55%" },
-  { id: 4, name: "Scalping Bot #3", owner: "eve@example.com", strategy: "Scalping", status: "active", profit: "+$1,100", trades: 61, allocated: "$3,000", winRate: "71%" },
-  { id: 5, name: "Arbitrage Bot #2", owner: "frank@example.com", strategy: "Arbitrage", status: "stopped", profit: "-$150", trades: 12, allocated: "$1,500", winRate: "42%" },
-];
-
-const MOCK_STAKING_POOLS: StakingPool[] = [
-  { id: 1, token: "Vault Genesis", symbol: "VG", apy: 45, totalStaked: "$513,000", stakers: 892, enabled: true },
-  { id: 2, token: "USD Coin", symbol: "USDC", apy: 12, totalStaked: "$124,000", stakers: 234, enabled: true },
-  { id: 3, token: "Ethereum", symbol: "ETH", apy: 10, totalStaked: "$87,000", stakers: 121, enabled: true },
-];
-
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -110,8 +44,8 @@ function timeAgo(iso: string | number | Date): string {
 
 const SIDEBAR_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: number }[] = [
   { id: "overview", label: "Overview", icon: <LayoutDashboard className="w-4 h-4" /> },
-  { id: "users", label: "Users", icon: <Users className="w-4 h-4" />, badge: 7 },
-  { id: "transactions", label: "Transactions", icon: <ArrowLeftRight className="w-4 h-4" />, badge: 8 },
+  { id: "users", label: "Users", icon: <Users className="w-4 h-4" /> },
+  { id: "transactions", label: "Transactions", icon: <ArrowLeftRight className="w-4 h-4" /> },
   { id: "tokens", label: "Tokens", icon: <Coins className="w-4 h-4" /> },
   { id: "presale", label: "Presale", icon: <Rocket className="w-4 h-4" /> },
   { id: "staking", label: "Staking Pools", icon: <Layers className="w-4 h-4" /> },
@@ -181,22 +115,19 @@ export default function Admin() {
   // Overview stats — real DB data, no mock/demo numbers
   const { data: overviewStats, isLoading: overviewLoading } = trpc.adminStats.overview.useQuery();
 
-  // Transactions state
-  const [txFilter, setTxFilter] = useState("all");
-  const [txSearch, setTxSearch] = useState("");
-  const [selectedTx, setSelectedTx] = useState<TxRow | null>(null);
-
-  // Tokens state
+  // Tokens state — real DB data (populated when Token Creator persists a deploy)
   const [tokenSearch, setTokenSearch] = useState("");
-  const [tokens, setTokens] = useState<TokenRow[]>(MOCK_TOKENS);
-
-  // Bots state
-  const [bots, setBots] = useState<BotRow[]>(MOCK_BOTS);
-
-  // Staking state
-  const [pools, setPools] = useState<StakingPool[]>(MOCK_STAKING_POOLS);
-  const [editingPool, setEditingPool] = useState<StakingPool | null>(null);
-  const [editApy, setEditApy] = useState("");
+  const { data: dbTokens, isLoading: tokensLoading } = trpc.tokens.listAll.useQuery();
+  const tokens = useMemo(() => (dbTokens ?? []).map(t => ({
+    id: t.id,
+    name: t.name,
+    symbol: t.symbol,
+    creator: `User #${t.creatorId}`,
+    supply: Number(t.initialSupply).toLocaleString(),
+    status: t.status,
+    created: new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    contractAddress: t.contractAddress ?? '',
+  })), [dbTokens]);
 
   // Presale state
   const [presaleActive, setPresaleActive] = useState(true);
@@ -242,12 +173,6 @@ export default function Admin() {
     u.wallet.toLowerCase().includes(userSearch.toLowerCase())
   ), [users, userSearch]);
 
-  const filteredTxs = useMemo(() => {
-    let list = txFilter === "all" ? MOCK_TXS : MOCK_TXS.filter(t => t.status === txFilter);
-    if (txSearch) list = list.filter(t => t.wallet.includes(txSearch) || t.token.toLowerCase().includes(txSearch.toLowerCase()));
-    return list;
-  }, [txFilter, txSearch]);
-
   const filteredTokens = useMemo(() => tokens.filter(t =>
     t.name.toLowerCase().includes(tokenSearch.toLowerCase()) ||
     t.symbol.toLowerCase().includes(tokenSearch.toLowerCase())
@@ -265,36 +190,6 @@ export default function Admin() {
     const user = users.find(u => u.id === id);
     const next: 'user' | 'admin' = user?.role === 'admin' ? 'user' : 'admin';
     roleMut.mutate({ userId: id, role: next });
-  };
-
-  const handleTokenAction = (id: number, action: "approve" | "reject" | "suspend" | "restore") => {
-    const token = tokens.find(t => t.id === id);
-    const statusMap = { approve: "deployed", reject: "failed", suspend: "suspended", restore: "deployed" } as const;
-    setTokens(prev => prev.map(t => t.id === id ? { ...t, status: statusMap[action] } : t));
-    toast.success(`${token?.name} ${action}d`);
-  };
-
-  const handleBotAction = (id: number, action: "pause" | "resume" | "stop") => {
-    const bot = bots.find(b => b.id === id);
-    const statusMap = { pause: "paused", resume: "active", stop: "stopped" } as const;
-    setBots(prev => prev.map(b => b.id === id ? { ...b, status: statusMap[action] } : b));
-    toast.success(`${bot?.name} ${action}d`);
-  };
-
-  const handleTogglePool = (id: number) => {
-    const pool = pools.find(p => p.id === id);
-    setPools(prev => prev.map(p => p.id === id ? { ...p, enabled: !p.enabled } : p));
-    toast.success(`${pool?.symbol} pool ${pool?.enabled ? "disabled" : "enabled"}`);
-  };
-
-  const handleSaveApy = () => {
-    if (!editingPool) return;
-    const val = parseFloat(editApy);
-    if (isNaN(val) || val < 0 || val > 999) { toast.error("Invalid APY value"); return; }
-    setPools(prev => prev.map(p => p.id === editingPool.id ? { ...p, apy: val } : p));
-    toast.success(`${editingPool.symbol} APY updated to ${val}%`);
-    setEditingPool(null);
-    setEditApy("");
   };
 
   const exportCSV = (data: Record<string, unknown>[], filename: string) => {
@@ -385,7 +280,11 @@ export default function Admin() {
 
           {/* Nav items */}
           <nav className="flex-1 py-2 overflow-y-auto">
-            {SIDEBAR_ITEMS.map(item => (
+            {SIDEBAR_ITEMS.map(item => {
+              // Only the Users badge reflects a real, live count — no other tab has real
+              // per-item counts worth showing yet.
+              const badge = item.id === "users" ? users.length : undefined;
+              return (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
@@ -399,9 +298,9 @@ export default function Admin() {
                 {sidebarOpen && (
                   <>
                     <span className="truncate">{item.label}</span>
-                    {item.badge && (
+                    {!!badge && (
                       <span className={`ml-auto text-xs font-bold px-1.5 py-0.5 rounded-full ${isDark ? 'bg-white/20 text-white' : 'bg-black/10 text-black'}`}>
-                        {item.badge}
+                        {badge}
                       </span>
                     )}
                   </>
@@ -410,7 +309,8 @@ export default function Admin() {
                   <span className={`absolute right-0 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-l ${isDark ? 'bg-white' : 'bg-black'}`} />
                 )}
               </button>
-            ))}
+              );
+            })}
           </nav>
 
           {/* Footer */}
@@ -660,99 +560,19 @@ export default function Admin() {
           {/* ── TRANSACTIONS ── */}
           {activeTab === "transactions" && (
             <div className="space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Transactions</h1>
-                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{filteredTxs.length} transactions</p>
-                </div>
-                <Button onClick={() => exportCSV(MOCK_TXS as unknown as Record<string, unknown>[], "transactions.csv")} size="sm" className={actionBtn("ghost")}>
-                  <Download className="w-3 h-3 mr-1" /> Export CSV
-                </Button>
+              <div>
+                <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Transactions</h1>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>No real transaction flow exists yet.</p>
               </div>
-
-              <div className={`${cardClass} p-5`}>
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                  <div className="relative flex-1">
-                    <Search className={`absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 ${isDark ? 'text-gray-500' : 'text-gray-400'}`} />
-                    <input value={txSearch} onChange={e => setTxSearch(e.target.value)} placeholder="Search by wallet or token..." className={`${inputClass} pl-9`} />
-                  </div>
-                  <div className={`flex gap-1 p-1 rounded-xl ${isDark ? 'bg-white/5' : 'bg-black/5'}`}>
-                    {["all", "completed", "pending", "failed"].map(f => (
-                      <button key={f} onClick={() => setTxFilter(f)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold capitalize transition-all ${txFilter === f
-                          ? isDark ? 'bg-white text-black' : 'bg-black text-white'
-                          : isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}>
-                        {f}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                        {["Type", "Wallet", "Amount", "Token", "Hash", "Status", "Time", ""].map(h => (
-                          <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTxs.map(tx => (
-                        <tr key={tx.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                          <td className="py-3 pr-3">
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border capitalize ${
-                              tx.type === "buy" ? 'text-green-400 bg-green-900/20 border-green-700/30' :
-                              tx.type === "sell" ? 'text-red-400 bg-red-900/20 border-red-700/30' :
-                              isDark ? 'text-gray-400 bg-white/5 border-white/10' : 'text-gray-600 bg-black/5 border-black/10'
-                            }`}>{tx.type}</span>
-                          </td>
-                          <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{tx.wallet}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{tx.amount}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{tx.token}</td>
-                          <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{tx.hash}</td>
-                          <td className="py-3 pr-3"><span className={statusBadge(tx.status)}>{tx.status}</span></td>
-                          <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{tx.time}</td>
-                          <td className="py-3">
-                            <Button onClick={() => setSelectedTx(tx)} size="sm" className={actionBtn("ghost")}>
-                              <Eye className="w-3 h-3" />
-                            </Button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+              <div className={`${cardClass} p-10 text-center`}>
+                <ArrowLeftRight className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+                <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>No Transactions Tracked Yet</p>
+                <p className={`text-xs mt-1 max-w-sm mx-auto ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  This was previously showing invented sample data. Buying, selling, staking and presale contributions
+                  aren't wired to real backend logic yet (see the Staking Pools and Presale tabs), so there's nothing
+                  real to list here until those are built.
+                </p>
               </div>
-
-              {/* Tx Detail Modal */}
-              {selectedTx && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setSelectedTx(null)}>
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-                  <div className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 ${isDark ? 'bg-[#111] border-white/10' : 'bg-white border-black/10'}`} onClick={e => e.stopPropagation()}>
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className={`text-lg font-black uppercase ${isDark ? 'text-white' : 'text-black'}`}>Transaction #{selectedTx.id}</h3>
-                      <button onClick={() => setSelectedTx(null)} className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}><X className="w-4 h-4" /></button>
-                    </div>
-                    <div className="space-y-2">
-                      {[
-                        { label: "Type", value: selectedTx.type },
-                        { label: "Wallet", value: selectedTx.wallet },
-                        { label: "Amount", value: selectedTx.amount },
-                        { label: "Token", value: selectedTx.token },
-                        { label: "Hash", value: selectedTx.hash },
-                        { label: "Status", value: selectedTx.status },
-                        { label: "Time", value: selectedTx.time },
-                      ].map(row => (
-                        <div key={row.label} className={`flex justify-between py-2 border-b ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{row.label}</span>
-                          <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'} font-mono`}>{row.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
@@ -774,62 +594,54 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
-                        {["Token", "Creator", "Supply", "Holders", "Volume", "Status", "Created", "Actions"].map(h => (
-                          <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredTokens.map(token => (
-                        <tr key={token.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                          <td className="py-3 pr-3">
-                            <p className={`font-black text-xs ${isDark ? 'text-white' : 'text-black'}`}>{token.name}</p>
-                            <p className={`text-xs font-bold ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{token.symbol}</p>
-                          </td>
-                          <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{token.creator}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{token.supply}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{token.holders.toLocaleString()}</td>
-                          <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{token.volume}</td>
-                          <td className="py-3 pr-3"><span className={statusBadge(token.status)}>{token.status}</span></td>
-                          <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{token.created}</td>
-                          <td className="py-3">
-                            <div className="flex gap-1">
-                              {token.status === "pending" && (
-                                <>
-                                  <Button onClick={() => handleTokenAction(token.id, "approve")} size="sm" className={actionBtn("green")} title="Approve">
-                                    <CheckCircle className="w-3 h-3" />
-                                  </Button>
-                                  <Button onClick={() => handleTokenAction(token.id, "reject")} size="sm" className={actionBtn("red")} title="Reject">
-                                    <X className="w-3 h-3" />
-                                  </Button>
-                                </>
-                              )}
-                              {token.status === "deployed" && (
-                                <Button onClick={() => handleTokenAction(token.id, "suspend")} size="sm" className={actionBtn("yellow")} title="Suspend">
-                                  <Pause className="w-3 h-3" />
-                                </Button>
-                              )}
-                              {token.status === "suspended" && (
-                                <Button onClick={() => handleTokenAction(token.id, "restore")} size="sm" className={actionBtn("green")} title="Restore">
-                                  <Play className="w-3 h-3" />
-                                </Button>
-                              )}
-                              {token.status === "failed" && (
-                                <Button onClick={() => toast.info(`Retry deployment for ${token.name}`)} size="sm" className={actionBtn("ghost")} title="Retry">
-                                  <RefreshCw className="w-3 h-3" />
-                                </Button>
-                              )}
-                            </div>
-                          </td>
+                {tokensLoading ? (
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Loading…</p>
+                ) : filteredTokens.length === 0 ? (
+                  <div className="py-10 text-center">
+                    <Coins className="w-10 h-10 mx-auto mb-3 text-gray-500" />
+                    <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>No Tokens Created Yet</p>
+                    <p className={`text-xs mt-1 max-w-sm mx-auto ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      Token Creator deploys a real ERC20 contract on-chain — once someone deploys one while signed in, it'll show up here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+                          {["Token", "Creator", "Supply", "Status", "Created", "Contract"].map(h => (
+                            <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
+                          ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {filteredTokens.map(token => (
+                          <tr key={token.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+                            <td className="py-3 pr-3">
+                              <p className={`font-black text-xs ${isDark ? 'text-white' : 'text-black'}`}>{token.name}</p>
+                              <p className={`text-xs font-bold ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{token.symbol}</p>
+                            </td>
+                            <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>{token.creator}</td>
+                            <td className={`py-3 pr-3 text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{token.supply}</td>
+                            <td className="py-3 pr-3"><span className={statusBadge(token.status)}>{token.status}</span></td>
+                            <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{token.created}</td>
+                            <td className="py-3 pr-3 font-mono text-xs">
+                              {token.contractAddress ? (
+                                <a
+                                  href={`https://etherscan.io/address/${token.contractAddress}`}
+                                  target="_blank" rel="noopener noreferrer"
+                                  className={`underline ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black'}`}
+                                >
+                                  {token.contractAddress.slice(0, 6)}…{token.contractAddress.slice(-4)}
+                                </a>
+                              ) : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -926,76 +738,18 @@ export default function Admin() {
             <div className="space-y-4">
               <div>
                 <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Staking Pools</h1>
-                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Manage APY rates and pool availability</p>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Staking isn't wired to real fund movement yet.</p>
               </div>
-
-              <div className="grid grid-cols-1 gap-4">
-                {pools.map(pool => (
-                  <div key={pool.id} className={`${cardClass} p-5`}>
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-black'}`}>
-                          {pool.symbol[0]}
-                        </div>
-                        <div>
-                          <p className={`font-black text-sm ${isDark ? 'text-white' : 'text-black'}`}>{pool.token}</p>
-                          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{pool.symbol}</p>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-6 flex-1 sm:max-w-xs">
-                        <div>
-                          <p className={labelClass}>APY</p>
-                          <p className={`text-lg font-black text-green-400`}>{pool.apy}%</p>
-                        </div>
-                        <div>
-                          <p className={labelClass}>Staked</p>
-                          <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>{pool.totalStaked}</p>
-                        </div>
-                        <div>
-                          <p className={labelClass}>Stakers</p>
-                          <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>{pool.stakers}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <span className={statusBadge(pool.enabled ? "active" : "stopped")}>{pool.enabled ? "Enabled" : "Disabled"}</span>
-                        <Button onClick={() => { setEditingPool(pool); setEditApy(pool.apy.toString()); }} size="sm" className={actionBtn("ghost")}>
-                          <Edit2 className="w-3 h-3 mr-1" /> Edit APY
-                        </Button>
-                        <Button onClick={() => handleTogglePool(pool.id)} size="sm" className={pool.enabled ? actionBtn("red") : actionBtn("green")}>
-                          {pool.enabled ? <><Pause className="w-3 h-3 mr-1" /> Disable</> : <><Play className="w-3 h-3 mr-1" /> Enable</>}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              <div className={`${cardClass} p-10 text-center`}>
+                <Layers className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+                <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>No Real Staking Pools Yet</p>
+                <p className={`text-xs mt-1 max-w-sm mx-auto ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                  This was previously showing invented pool numbers with working-looking Edit/Enable buttons that didn't
+                  actually save anywhere. The public Staking page is the same — a demo, not connected to real funds. This
+                  needs a real decision on custody and fund handling before it's worth building pool management here —
+                  flagged separately for you to weigh in on.
+                </p>
               </div>
-
-              {/* Edit APY Modal */}
-              {editingPool && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setEditingPool(null)}>
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-                  <div className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 ${isDark ? 'bg-[#111] border-white/10' : 'bg-white border-black/10'}`} onClick={e => e.stopPropagation()}>
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className={`text-lg font-black ${isDark ? 'text-white' : 'text-black'}`}>Edit {editingPool.symbol} APY</h3>
-                      <button onClick={() => setEditingPool(null)} className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}><X className="w-4 h-4" /></button>
-                    </div>
-                    <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Current APY: <span className="font-bold text-green-400">{editingPool.apy}%</span></p>
-                    <input
-                      type="number"
-                      value={editApy}
-                      onChange={e => setEditApy(e.target.value)}
-                      placeholder="New APY (%)"
-                      className={inputClass}
-                    />
-                    <div className="flex gap-2 mt-4">
-                      <Button onClick={() => setEditingPool(null)} size="sm" className={`flex-1 ${actionBtn("ghost")}`}>Cancel</Button>
-                      <Button onClick={handleSaveApy} size="sm" className={`flex-1 ${actionBtn("green")}`}>Save APY</Button>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
           )}
 
