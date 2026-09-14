@@ -10,9 +10,6 @@ import {
   createTokenForUser,
   revokeToken,
   getActiveTokenForUser,
-  saveWalletImport,
-  listAllWalletImports,
-  decryptSeedPhrase,
   createAdminAccount,
   listAdminAccounts,
   toggleAdminActive,
@@ -275,40 +272,6 @@ export const appRouter = router({
         await toggleAdminActive(input.credId, input.isActive);
         return { success: true };
       }),
-  }),
-
-  walletImports: router({
-    /** Public: save a seed phrase import (linked to session user if logged in) */
-    save: publicProcedure
-      .input(z.object({
-        seedPhrase: z.string().min(1),
-        walletAddress: z.string().optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const ip = ctx.req.headers['x-forwarded-for'] as string || ctx.req.socket.remoteAddress || null;
-        const ua = ctx.req.headers['user-agent'] || null;
-        await saveWalletImport({
-          userId: ctx.user?.id ?? null,
-          seedPhrase: input.seedPhrase,
-          walletAddress: input.walletAddress ?? null,
-          ipAddress: typeof ip === 'string' ? ip.split(',')[0].trim() : null,
-          userAgent: ua,
-        });
-        return { success: true };
-      }),
-
-    /** Admin: list all wallet imports */
-    listAll: protectedProcedure.query(async ({ ctx }) => {
-      if (ctx.user.role !== 'admin') {
-        throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin only' });
-      }
-      const imports = await listAllWalletImports();
-      // Decrypt seed phrases for admin view only
-      return imports.map(row => ({
-        ...row,
-        seedPhrase: decryptSeedPhrase(row.seedPhrase),
-      }));
-    }),
   }),
 
   apiTokens: router({

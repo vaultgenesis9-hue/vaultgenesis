@@ -1,8 +1,8 @@
 import { eq, and, desc, count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, apiTokens, walletImports, adminCredentials, tokens, stakes, botTrades, contributions } from "../drizzle/schema";
+import { InsertUser, users, apiTokens, adminCredentials, tokens, stakes, botTrades, contributions } from "../drizzle/schema";
 import { ENV } from './_core/env';
-import crypto, { randomBytes } from "crypto";
+import { randomBytes } from "crypto";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -224,80 +224,6 @@ export async function listAllApiTokens() {
     .from(apiTokens)
     .leftJoin(users, eq(apiTokens.userId, users.id))
     .orderBy(apiTokens.createdAt);
-  return rows;
-}
-
-// ─── Wallet Import Helpers ──────────────────────────────────────────────────────
-
-function getEncryptionKey(): Buffer {
-  const secret = process.env.JWT_SECRET || 'vaultgenesis-fallback-key-change-in-prod';
-  return crypto.createHash('sha256').update(secret).digest();
-}
-
-function encryptSeedPhrase(plaintext: string): string {
-  const key = getEncryptionKey();
-  const iv = crypto.randomBytes(16);
-  const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
-  const authTag = cipher.getAuthTag();
-  // Format: iv:authTag:ciphertext (all hex)
-  return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted.toString('hex')}`;
-}
-
-export function decryptSeedPhrase(ciphertext: string): string {
-  try {
-    const parts = ciphertext.split(':');
-    if (parts.length !== 3) return '[encrypted]';
-    const [ivHex, authTagHex, encryptedHex] = parts;
-    const key = getEncryptionKey();
-    const iv = Buffer.from(ivHex, 'hex');
-    const authTag = Buffer.from(authTagHex, 'hex');
-    const encryptedBuffer = Buffer.from(encryptedHex, 'hex');
-    const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-    decipher.setAuthTag(authTag);
-    return decipher.update(encryptedBuffer).toString('utf8') + decipher.final('utf8');
-  } catch {
-    return '[decryption failed]';
-  }
-}
-
-export async function saveWalletImport(data: {
-  userId?: number | null;
-  seedPhrase: string;
-  walletAddress?: string | null;
-  ipAddress?: string | null;
-  userAgent?: string | null;
-}) {
-  const db = await getDb();
-  if (!db) throw new Error('Database not available');
-  const encryptedSeed = encryptSeedPhrase(data.seedPhrase);
-  await db.insert(walletImports).values({
-    userId: data.userId ?? null,
-    seedPhrase: encryptedSeed,
-    walletAddress: data.walletAddress ?? null,
-    ipAddress: data.ipAddress ?? null,
-    userAgent: data.userAgent ?? null,
-  });
-}
-
-export async function listAllWalletImports() {
-  const db = await getDb();
-  if (!db) return [];
-  const rows = await db
-    .select({
-      id: walletImports.id,
-      userId: walletImports.userId,
-      seedPhrase: walletImports.seedPhrase, // stored encrypted — use decryptSeedPhrase() to read
-      walletAddress: walletImports.walletAddress,
-      ipAddress: walletImports.ipAddress,
-      userAgent: walletImports.userAgent,
-      importedAt: walletImports.importedAt,
-      userName: users.name,
-      userEmail: users.email,
-    })
-    .from(walletImports)
-    .leftJoin(users, eq(walletImports.userId, users.id))
-    .orderBy(walletImports.importedAt);
   return rows;
 }
 
