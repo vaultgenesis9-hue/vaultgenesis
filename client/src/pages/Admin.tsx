@@ -129,6 +129,66 @@ export default function Admin() {
     contractAddress: t.contractAddress ?? '',
   })), [dbTokens]);
 
+  // Staking Pools state — real DB-backed config; "staked"/"stakers" always
+  // computed live from the stakes table server-side, never typed in.
+  const utilsPools = trpc.useUtils();
+  const { data: pools, isLoading: poolsLoading } = trpc.stakingPools.list.useQuery();
+  const [showCreatePool, setShowCreatePool] = useState(false);
+  const [newPoolToken, setNewPoolToken] = useState("");
+  const [newPoolSymbol, setNewPoolSymbol] = useState("");
+  const [newPoolApy, setNewPoolApy] = useState("");
+  const [editingPool, setEditingPool] = useState<{ id: number; symbol: string; apy: string } | null>(null);
+  const [editApy, setEditApy] = useState("");
+
+  const createPoolMut = trpc.stakingPools.create.useMutation({
+    onSuccess: () => {
+      toast.success(`${newPoolSymbol} pool created`);
+      setShowCreatePool(false);
+      setNewPoolToken(""); setNewPoolSymbol(""); setNewPoolApy("");
+      utilsPools.stakingPools.list.invalidate();
+    },
+    onError: (e) => toast.error(e.message || "Failed to create pool"),
+  });
+
+  const updatePoolMut = trpc.stakingPools.update.useMutation({
+    onSuccess: () => {
+      toast.success("APY updated");
+      setEditingPool(null);
+      utilsPools.stakingPools.list.invalidate();
+    },
+    onError: (e) => toast.error(e.message || "Failed to update pool"),
+  });
+
+  const setPoolEnabledMut = trpc.stakingPools.setEnabled.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.isEnabled ? "Pool enabled" : "Pool disabled");
+      utilsPools.stakingPools.list.invalidate();
+    },
+    onError: (e) => toast.error(e.message || "Failed to update pool"),
+  });
+
+  const deletePoolMut = trpc.stakingPools.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Pool deleted");
+      utilsPools.stakingPools.list.invalidate();
+    },
+    onError: (e) => toast.error(e.message || "Failed to delete pool"),
+  });
+
+  const handleCreatePool = () => {
+    if (!newPoolToken.trim() || !newPoolSymbol.trim()) { toast.error("Token name and symbol are required"); return; }
+    const apy = parseFloat(newPoolApy);
+    if (isNaN(apy) || apy < 0 || apy > 999) { toast.error("Enter a valid APY"); return; }
+    createPoolMut.mutate({ token: newPoolToken.trim(), symbol: newPoolSymbol.trim().toUpperCase(), apy });
+  };
+
+  const handleSaveApy = () => {
+    if (!editingPool) return;
+    const apy = parseFloat(editApy);
+    if (isNaN(apy) || apy < 0 || apy > 999) { toast.error("Enter a valid APY"); return; }
+    updatePoolMut.mutate({ id: editingPool.id, apy });
+  };
+
   // Presale state
   const [presaleActive, setPresaleActive] = useState(true);
   const [presaleHardCap, setPresaleHardCap] = useState("2,000,000");
@@ -736,20 +796,145 @@ export default function Admin() {
           {/* ── STAKING ── */}
           {activeTab === "staking" && (
             <div className="space-y-4">
-              <div>
-                <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Staking Pools</h1>
-                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Staking isn't wired to real fund movement yet.</p>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Staking Pools</h1>
+                  <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Pool settings are real and saved. "Staked"/"Stakers" reflect real stake records — they'll read 0 until actual staking is built (see note below).
+                  </p>
+                </div>
+                <Button onClick={() => setShowCreatePool(true)} size="sm" className={actionBtn("green")}>
+                  <Plus className="w-3 h-3 mr-1" /> Create Pool
+                </Button>
               </div>
-              <div className={`${cardClass} p-10 text-center`}>
-                <Layers className="w-12 h-12 mx-auto mb-3 text-gray-500" />
-                <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>No Real Staking Pools Yet</p>
-                <p className={`text-xs mt-1 max-w-sm mx-auto ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
-                  This was previously showing invented pool numbers with working-looking Edit/Enable buttons that didn't
-                  actually save anywhere. The public Staking page is the same — a demo, not connected to real funds. This
-                  needs a real decision on custody and fund handling before it's worth building pool management here —
-                  flagged separately for you to weigh in on.
-                </p>
-              </div>
+
+              {poolsLoading ? (
+                <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Loading…</p>
+              ) : !pools || pools.length === 0 ? (
+                <div className={`${cardClass} p-10 text-center`}>
+                  <Layers className="w-12 h-12 mx-auto mb-3 text-gray-500" />
+                  <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>No Pools Yet</p>
+                  <p className={`text-xs mt-1 max-w-sm mx-auto ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    Click "Create Pool" to set one up.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-4">
+                  {pools.map(pool => (
+                    <div key={pool.id} className={`${cardClass} p-5`}>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-sm ${isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-black'}`}>
+                            {pool.symbol[0]}
+                          </div>
+                          <div>
+                            <p className={`font-black text-sm ${isDark ? 'text-white' : 'text-black'}`}>{pool.token}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{pool.symbol}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-6 flex-1 sm:max-w-xs">
+                          <div>
+                            <p className={labelClass}>APY</p>
+                            <p className={`text-lg font-black text-green-400`}>{Number(pool.apy)}%</p>
+                          </div>
+                          <div>
+                            <p className={labelClass}>Staked</p>
+                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>{Number(pool.totalStaked).toLocaleString()} {pool.symbol}</p>
+                          </div>
+                          <div>
+                            <p className={labelClass}>Stakers</p>
+                            <p className={`text-sm font-bold ${isDark ? 'text-white' : 'text-black'}`}>{pool.stakers}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className={statusBadge(pool.isEnabled ? "active" : "stopped")}>{pool.isEnabled ? "Enabled" : "Disabled"}</span>
+                          <Button onClick={() => { setEditingPool({ id: pool.id, symbol: pool.symbol, apy: pool.apy }); setEditApy(String(Number(pool.apy))); }} size="sm" className={actionBtn("ghost")}>
+                            <Edit2 className="w-3 h-3 mr-1" /> Edit APY
+                          </Button>
+                          <Button
+                            onClick={() => setPoolEnabledMut.mutate({ id: pool.id, isEnabled: !pool.isEnabled })}
+                            size="sm"
+                            className={pool.isEnabled ? actionBtn("red") : actionBtn("green")}
+                          >
+                            {pool.isEnabled ? <><Pause className="w-3 h-3 mr-1" /> Disable</> : <><Play className="w-3 h-3 mr-1" /> Enable</>}
+                          </Button>
+                          <Button onClick={() => { if (confirm(`Delete the ${pool.symbol} pool?`)) deletePoolMut.mutate({ id: pool.id }); }} size="sm" className={actionBtn("ghost")} title="Delete">
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>
+                Note: pools you create here are real and saved, but the public Staking page still doesn't move real
+                funds or write real stake records — that's a separate, still-open build (see the earlier note on
+                Staking/Presale). Setting pools up now just means they're ready once that's built.
+              </p>
+
+              {/* Create Pool Modal */}
+              {showCreatePool && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setShowCreatePool(false)}>
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                  <div className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 ${isDark ? 'bg-[#111] border-white/10' : 'bg-white border-black/10'}`} onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className={`text-lg font-black ${isDark ? 'text-white' : 'text-black'}`}>Create Staking Pool</h3>
+                      <button onClick={() => setShowCreatePool(false)} className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}><X className="w-4 h-4" /></button>
+                    </div>
+                    <div className="space-y-3">
+                      <div>
+                        <label className={`${labelClass} block mb-1`}>Token Name</label>
+                        <input value={newPoolToken} onChange={e => setNewPoolToken(e.target.value)} placeholder="e.g. Vault Genesis" className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={`${labelClass} block mb-1`}>Symbol</label>
+                        <input value={newPoolSymbol} onChange={e => setNewPoolSymbol(e.target.value)} placeholder="e.g. VG" className={inputClass} />
+                      </div>
+                      <div>
+                        <label className={`${labelClass} block mb-1`}>APY (%)</label>
+                        <input type="number" value={newPoolApy} onChange={e => setNewPoolApy(e.target.value)} placeholder="e.g. 45" className={inputClass} />
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-5">
+                      <Button onClick={() => setShowCreatePool(false)} size="sm" className={`flex-1 ${actionBtn("ghost")}`}>Cancel</Button>
+                      <Button onClick={handleCreatePool} size="sm" className={`flex-1 ${actionBtn("green")}`} disabled={createPoolMut.isPending}>
+                        {createPoolMut.isPending ? "Creating…" : "Create Pool"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit APY Modal */}
+              {editingPool && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={() => setEditingPool(null)}>
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                  <div className={`relative z-10 w-full max-w-sm rounded-2xl border p-6 ${isDark ? 'bg-[#111] border-white/10' : 'bg-white border-black/10'}`} onClick={e => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className={`text-lg font-black ${isDark ? 'text-white' : 'text-black'}`}>Edit {editingPool.symbol} APY</h3>
+                      <button onClick={() => setEditingPool(null)} className={isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}><X className="w-4 h-4" /></button>
+                    </div>
+                    <p className={`text-xs mb-3 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Current APY: <span className="font-bold text-green-400">{Number(editingPool.apy)}%</span></p>
+                    <input
+                      type="number"
+                      value={editApy}
+                      onChange={e => setEditApy(e.target.value)}
+                      placeholder="New APY (%)"
+                      className={inputClass}
+                    />
+                    <div className="flex gap-2 mt-4">
+                      <Button onClick={() => setEditingPool(null)} size="sm" className={`flex-1 ${actionBtn("ghost")}`}>Cancel</Button>
+                      <Button onClick={handleSaveApy} size="sm" className={`flex-1 ${actionBtn("green")}`} disabled={updatePoolMut.isPending}>
+                        {updatePoolMut.isPending ? "Saving…" : "Save APY"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -156,3 +156,15 @@ CREATE TABLE IF NOT EXISTS `depositWallets` (
 	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `depositWallets_id` PRIMARY KEY(`id`)
 );
+
+CREATE TABLE IF NOT EXISTS `stakingPools` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`token` varchar(100) NOT NULL,
+	`symbol` varchar(16) NOT NULL,
+	`apy` decimal(5,2) NOT NULL,
+	`isEnabled` int NOT NULL DEFAULT 1,
+	`createdBy` int NOT NULL,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `stakingPools_id` PRIMARY KEY(`id`)
+);

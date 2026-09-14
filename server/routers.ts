@@ -39,6 +39,10 @@ import {
   createDepositWallet,
   updateDepositWallet,
   deleteDepositWallet,
+  listStakingPools,
+  createStakingPool,
+  updateStakingPool,
+  deleteStakingPool,
 } from "./db";
 import { createHash } from "crypto";
 import { uploadToCloudinary } from "./cloudinary";
@@ -622,6 +626,63 @@ export const appRouter = router({
       .mutation(async ({ ctx, input }) => {
         if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
         await deleteDepositWallet(input.id);
+        return { success: true };
+      }),
+  }),
+
+  /**
+   * Admin-configured staking pools (token, symbol, APY, enabled/disabled).
+   * "Total staked" / "stakers" are always computed live from the real `stakes`
+   * table — never a number typed in by an admin — so this tab can't drift back
+   * into showing invented figures. Actual staking (deposits, rewards) is a
+   * separate, still-open build — this just lets pools be configured for when
+   * that's real.
+   */
+  stakingPools: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return listStakingPools();
+    }),
+
+    create: protectedProcedure
+      .input(z.object({
+        token: z.string().min(1).max(100),
+        symbol: z.string().min(1).max(16),
+        apy: z.number().min(0).max(999),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await createStakingPool({ ...input, createdBy: ctx.user.id });
+        return { success: true };
+      }),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        token: z.string().min(1).max(100).optional(),
+        symbol: z.string().min(1).max(16).optional(),
+        apy: z.number().min(0).max(999).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        const { id, ...data } = input;
+        await updateStakingPool(id, data);
+        return { success: true };
+      }),
+
+    setEnabled: protectedProcedure
+      .input(z.object({ id: z.number(), isEnabled: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await updateStakingPool(input.id, { isEnabled: input.isEnabled ? 1 : 0 });
+        return { success: true };
+      }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await deleteStakingPool(input.id);
         return { success: true };
       }),
   }),

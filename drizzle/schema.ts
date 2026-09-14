@@ -157,3 +157,21 @@ export const depositWallets = mysqlTable("depositWallets", {
 
 export type DepositWallet = typeof depositWallets.$inferSelect;
 export type InsertDepositWallet = typeof depositWallets.$inferInsert;
+
+// Admin-configured staking pools — the token/APY/enabled settings an admin sets up
+// for staking. This table only holds pool CONFIGURATION; actual user stake
+// positions live in the `stakes` table above and are aggregated against this by
+// tokenSymbol to show real (not invented) "total staked" / "stakers" numbers.
+export const stakingPools = mysqlTable("stakingPools", {
+  id: int("id").autoincrement().primaryKey(),
+  token: varchar("token", { length: 100 }).notNull(), // display name, e.g. "Vault Genesis"
+  symbol: varchar("symbol", { length: 16 }).notNull(),
+  apy: decimal("apy", { precision: 5, scale: 2 }).notNull(),
+  isEnabled: int("isEnabled").default(1).notNull(), // 1 = enabled/open, 0 = disabled
+  createdBy: int("createdBy").notNull(), // admin userId who created this
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type StakingPoolRow = typeof stakingPools.$inferSelect;
+export type InsertStakingPool = typeof stakingPools.$inferInsert;

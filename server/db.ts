@@ -1,6 +1,6 @@
 import { eq, and, desc, count, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, apiTokens, adminCredentials, tokens, stakes, botTrades, contributions, depositWallets } from "../drizzle/schema";
+import { InsertUser, users, apiTokens, adminCredentials, tokens, stakes, botTrades, contributions, depositWallets, stakingPools } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { randomBytes } from "crypto";
 
@@ -196,6 +196,25 @@ export async function runMigrations() {
     console.log("[Migrate] depositWallets table ready");
   } catch (error) {
     console.error("[Migrate] Failed to ensure depositWallets table:", error);
+  }
+
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS \`stakingPools\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`token\` varchar(100) NOT NULL,
+        \`symbol\` varchar(16) NOT NULL,
+        \`apy\` decimal(5,2) NOT NULL,
+        \`isEnabled\` int NOT NULL DEFAULT 1,
+        \`createdBy\` int NOT NULL,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT \`stakingPools_id\` PRIMARY KEY(\`id\`)
+      )
+    `);
+    console.log("[Migrate] stakingPools table ready");
+  } catch (error) {
+    console.error("[Migrate] Failed to ensure stakingPools table:", error);
   }
 
   // Cleans up the table left behind by the seed-phrase collection flow removed in
@@ -784,4 +803,56 @@ export async function deleteDepositWallet(id: number) {
   const db = await getDb();
   if (!db) throw new Error('Database not available');
   await db.delete(depositWallets).where(eq(depositWallets.id, id));
+}
+
+// ─── Staking Pool Helpers (admin-configured pools, real stake stats) ───────
+
+/** All pools with real staked totals/staker counts, computed from the `stakes` table — never invented numbers. */
+export async function listStakingPools() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const [pools, stakeStats] = await Promise.all([
+    db.select().from(stakingPools).orderBy(desc(stakingPools.createdAt)),
+    db.select({
+      tokenSymbol: stakes.tokenSymbol,
+      totalStaked: sql<string>`SUM(${stakes.amount})`,
+      stakers: sql<number>`COUNT(DISTINCT ${stakes.userId})`,
+    }).from(stakes).where(eq(stakes.status, 'active')).groupBy(stakes.tokenSymbol),
+  ]);
+  const statsBySymbol = new Map(stakeStats.map(s => [s.tokenSymbol, s]));
+  return pools.map(pool => {
+    const stat = statsBySymbol.get(pool.symbol);
+    return {
+      ...pool,
+      totalStaked: stat?.totalStaked ?? "0",
+      stakers: stat?.stakers ?? 0,
+    };
+  });
+}
+
+export async function createStakingPool(data: { token: string; symbol: string; apy: number; createdBy: number }) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.insert(stakingPools).values({
+    token: data.token,
+    symbol: data.symbol,
+    apy: data.apy.toFixed(2),
+    createdBy: data.createdBy,
+  });
+}
+
+export async function updateStakingPool(id: number, data: Partial<{ token: string; symbol: string; apy: number; isEnabled: number }>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const { apy, ...rest } = data;
+  await db.update(stakingPools).set({
+    ...rest,
+    ...(apy !== undefined ? { apy: apy.toFixed(2) } : {}),
+  }).where(eq(stakingPools.id, id));
+}
+
+export async function deleteStakingPool(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.delete(stakingPools).where(eq(stakingPools.id, id));
 }
