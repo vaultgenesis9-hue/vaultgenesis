@@ -31,6 +31,11 @@ import {
   findUserByVerificationToken,
   markEmailVerified,
   getDashboardOverview,
+  listDepositWallets,
+  listActiveDepositWallets,
+  createDepositWallet,
+  updateDepositWallet,
+  deleteDepositWallet,
 } from "./db";
 import { createHash } from "crypto";
 import { uploadToCloudinary } from "./cloudinary";
@@ -508,6 +513,72 @@ export const appRouter = router({
         };
       }
     }),
+  }),
+
+  /**
+   * Company/project deposit wallets — public addresses only, admin-managed so the
+   * team can add, replace or retire the address people deposit to without a code
+   * change or a developer request. Never stores private keys or seed phrases.
+   */
+  depositWallets: router({
+    /** Admin: list every wallet (active and retired) */
+    list: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      return listDepositWallets();
+    }),
+
+    /** Public: only the currently active wallet(s), for display on deposit/stake/invest flows */
+    listActive: publicProcedure.query(async () => {
+      return listActiveDepositWallets();
+    }),
+
+    /** Admin: add a new wallet */
+    create: protectedProcedure
+      .input(z.object({
+        label: z.string().min(1).max(100),
+        network: z.string().min(1).max(32),
+        address: z.string().min(1).max(128),
+        notes: z.string().max(1000).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        const id = await createDepositWallet({ ...input, createdBy: ctx.user.id });
+        return { success: true, id };
+      }),
+
+    /** Admin: edit label/network/address/notes */
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        label: z.string().min(1).max(100).optional(),
+        network: z.string().min(1).max(32).optional(),
+        address: z.string().min(1).max(128).optional(),
+        notes: z.string().max(1000).nullable().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        const { id, ...data } = input;
+        await updateDepositWallet(id, data);
+        return { success: true };
+      }),
+
+    /** Admin: activate or retire a wallet (retired wallets stop showing to users but stay on record) */
+    setActive: protectedProcedure
+      .input(z.object({ id: z.number(), isActive: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await updateDepositWallet(input.id, { isActive: input.isActive ? 1 : 0 });
+        return { success: true };
+      }),
+
+    /** Admin: permanently remove a wallet record */
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        await deleteDepositWallet(input.id);
+        return { success: true };
+      }),
   }),
 });
 

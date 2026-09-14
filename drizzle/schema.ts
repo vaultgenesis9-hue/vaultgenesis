@@ -139,3 +139,21 @@ export const adminCredentials = mysqlTable("adminCredentials", {
 
 export type AdminCredential = typeof adminCredentials.$inferSelect;
 export type InsertAdminCredential = typeof adminCredentials.$inferInsert;
+
+// Company/project deposit wallets — public addresses admins manage themselves so
+// staking/presale/deposit flows always point at a current, admin-controlled address
+// without needing a code change. Only ever stores PUBLIC addresses, never keys.
+export const depositWallets = mysqlTable("depositWallets", {
+  id: int("id").autoincrement().primaryKey(),
+  label: varchar("label", { length: 100 }).notNull(), // e.g. "Main ETH Treasury"
+  network: varchar("network", { length: 32 }).notNull(), // e.g. "ethereum", "bsc", "polygon", "bitcoin", "tron"
+  address: varchar("address", { length: 128 }).notNull(),
+  isActive: int("isActive").default(1).notNull(), // 1 = active/current, 0 = retired
+  notes: text("notes"),
+  createdBy: int("createdBy").notNull(), // admin userId who added this
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type DepositWallet = typeof depositWallets.$inferSelect;
+export type InsertDepositWallet = typeof depositWallets.$inferInsert;

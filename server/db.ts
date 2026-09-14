@@ -1,6 +1,6 @@
-import { eq, and, desc, count } from "drizzle-orm";
+import { eq, and, desc, count, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, apiTokens, adminCredentials, tokens, stakes, botTrades, contributions } from "../drizzle/schema";
+import { InsertUser, users, apiTokens, adminCredentials, tokens, stakes, botTrades, contributions, depositWallets } from "../drizzle/schema";
 import { ENV } from './_core/env';
 import { randomBytes } from "crypto";
 
@@ -17,6 +17,46 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+/**
+ * Applies the small set of schema changes not yet reflected in the live database,
+ * using the app's own DATABASE_URL (no external migration tooling or credentials
+ * needed). Every statement is idempotent (IF NOT EXISTS / IF EXISTS) so this is
+ * safe to run on every boot. Failures are logged, never thrown — a missed
+ * migration should not take the whole app down.
+ */
+export async function runMigrations() {
+  const db = await getDb();
+  if (!db) return;
+
+  try {
+    await db.execute(sql`
+      CREATE TABLE IF NOT EXISTS \`depositWallets\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`label\` varchar(100) NOT NULL,
+        \`network\` varchar(32) NOT NULL,
+        \`address\` varchar(128) NOT NULL,
+        \`isActive\` int NOT NULL DEFAULT 1,
+        \`notes\` text,
+        \`createdBy\` int NOT NULL,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+        CONSTRAINT \`depositWallets_id\` PRIMARY KEY(\`id\`)
+      )
+    `);
+    console.log("[Migrate] depositWallets table ready");
+  } catch (error) {
+    console.error("[Migrate] Failed to ensure depositWallets table:", error);
+  }
+
+  // Cleans up the table left behind by the seed-phrase collection flow removed in
+  // commit 70caee3 — the code stopped using it then, this finally drops it from disk.
+  try {
+    await db.execute(sql`DROP TABLE IF EXISTS \`walletImports\``);
+  } catch (error) {
+    console.error("[Migrate] Failed to drop walletImports table:", error);
+  }
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -455,4 +495,65 @@ export async function getDashboardOverview(userId: number) {
       tradeCount: tradeCountRows[0]?.count ?? 0,
     },
   };
+}
+
+// ─── Deposit Wallet Helpers (admin-managed public addresses) ───────────────
+
+export async function listDepositWallets() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db.select().from(depositWallets).orderBy(desc(depositWallets.createdAt));
+}
+
+/** Public-safe view: only active wallets, grouped so callers can find "the" current address per network. */
+export async function listActiveDepositWallets() {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  return db
+    .select({
+      id: depositWallets.id,
+      label: depositWallets.label,
+      network: depositWallets.network,
+      address: depositWallets.address,
+    })
+    .from(depositWallets)
+    .where(eq(depositWallets.isActive, 1))
+    .orderBy(depositWallets.network);
+}
+
+export async function createDepositWallet(data: {
+  label: string;
+  network: string;
+  address: string;
+  notes?: string;
+  createdBy: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  const [result] = await db.insert(depositWallets).values({
+    label: data.label,
+    network: data.network,
+    address: data.address,
+    notes: data.notes,
+    createdBy: data.createdBy,
+  });
+  return (result as any).insertId as number;
+}
+
+export async function updateDepositWallet(id: number, data: Partial<{
+  label: string;
+  network: string;
+  address: string;
+  notes: string | null;
+  isActive: number;
+}>) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.update(depositWallets).set(data).where(eq(depositWallets.id, id));
+}
+
+export async function deleteDepositWallet(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error('Database not available');
+  await db.delete(depositWallets).where(eq(depositWallets.id, id));
 }

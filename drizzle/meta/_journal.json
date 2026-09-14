@@ -50,6 +50,13 @@
       "when": 1773941841266,
       "tag": "0006_rapid_shen",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1789399848116,
+      "tag": "0007_worthless_skin",
+      "breakpoints": true
     }
   ]
 }

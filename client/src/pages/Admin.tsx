@@ -12,13 +12,13 @@ import {
   ChevronRight, X, Eye, EyeOff, Download, RefreshCw, Pause, Play,
   AlertTriangle, BarChart3, Percent, Bell, ToggleLeft, ToggleRight,
   Menu, ChevronLeft, Edit2, Trash2, Plus, Activity, Clock, Filter, Key, Copy, RotateCcw,
-  UserCog, Lock, UserPlus,
+  UserCog, Lock, UserPlus, Wallet,
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "admin-accounts" | "settings";
+type Tab = "overview" | "users" | "transactions" | "tokens" | "presale" | "staking" | "bots" | "api-tokens" | "admin-accounts" | "wallets" | "settings";
 
 interface UserRow {
   id: number; name: string; wallet: string; email: string;
@@ -112,6 +112,7 @@ const SIDEBAR_ITEMS: { id: Tab; label: string; icon: React.ReactNode; badge?: nu
   { id: "bots", label: "Bots", icon: <Bot className="w-4 h-4" /> },
   { id: "api-tokens", label: "API Tokens", icon: <Key className="w-4 h-4" /> },
   { id: "admin-accounts", label: "Admin Accounts", icon: <UserCog className="w-4 h-4" /> },
+  { id: "wallets", label: "Deposit Wallets", icon: <Wallet className="w-4 h-4" /> },
   { id: "settings", label: "Settings", icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -1026,6 +1027,11 @@ export default function Admin() {
             <AdminAccountsTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
           )}
 
+          {/* ── DEPOSIT WALLETS ── */}
+          {activeTab === "wallets" && (
+            <DepositWalletsTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
+          )}
+
           {/* ── API TOKENS ── */}
           {activeTab === "api-tokens" && (
             <ApiTokensTab isDark={isDark} cardClass={cardClass} labelClass={labelClass} actionBtn={actionBtn} inputClass={inputClass} />
@@ -1698,6 +1704,355 @@ function AdminAccountsTab({ isDark, cardClass, labelClass, actionBtn, inputClass
                   <Lock className="w-3 h-3 mr-1" />
                 )}
                 Create Account
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Deposit Wallets Tab ────────────────────────────────────────────────────
+
+interface DepositWalletsTabProps {
+  isDark: boolean;
+  cardClass: string;
+  labelClass: string;
+  actionBtn: (variant: "ghost" | "red" | "green" | "yellow") => string;
+  inputClass: string;
+}
+
+const NETWORK_OPTIONS = ["ethereum", "bsc", "polygon", "bitcoin", "tron", "solana", "other"];
+
+function DepositWalletsTab({ isDark, cardClass, labelClass, actionBtn, inputClass }: DepositWalletsTabProps) {
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [form, setForm] = useState({ label: "", network: "ethereum", address: "", notes: "" });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const { data: wallets, isLoading, refetch } = trpc.depositWallets.list.useQuery();
+
+  const createMut = trpc.depositWallets.create.useMutation({
+    onSuccess: () => {
+      toast.success("Wallet added");
+      closeModal();
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const updateMut = trpc.depositWallets.update.useMutation({
+    onSuccess: () => {
+      toast.success("Wallet updated");
+      closeModal();
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const setActiveMut = trpc.depositWallets.setActive.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(vars.isActive ? "Wallet activated" : "Wallet retired");
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const deleteMut = trpc.depositWallets.delete.useMutation({
+    onSuccess: () => {
+      toast.success("Wallet removed");
+      setDeleteConfirm(null);
+      refetch();
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingId(null);
+    setForm({ label: "", network: "ethereum", address: "", notes: "" });
+    setFormErrors({});
+  };
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm({ label: "", network: "ethereum", address: "", notes: "" });
+    setFormErrors({});
+    setShowModal(true);
+  };
+
+  const openEdit = (row: NonNullable<typeof wallets>[number]) => {
+    setEditingId(row.id);
+    setForm({ label: row.label, network: row.network, address: row.address, notes: row.notes ?? "" });
+    setFormErrors({});
+    setShowModal(true);
+  };
+
+  const validate = () => {
+    const errs: Record<string, string> = {};
+    if (!form.label.trim()) errs.label = "Give this wallet a label";
+    if (!form.network.trim()) errs.network = "Pick a network";
+    if (!form.address.trim() || form.address.trim().length < 8) errs.address = "Enter a valid public wallet address";
+    setFormErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const handleSave = () => {
+    if (!validate()) return;
+    const payload = { label: form.label.trim(), network: form.network, address: form.address.trim(), notes: form.notes.trim() || undefined };
+    if (editingId != null) {
+      updateMut.mutate({ id: editingId, ...payload });
+    } else {
+      createMut.mutate(payload);
+    }
+  };
+
+  const copyAddress = (address: string) => {
+    navigator.clipboard.writeText(address);
+    toast.success("Address copied");
+  };
+
+  const rows = wallets ?? [];
+  const saving = createMut.isPending || updateMut.isPending;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Deposit Wallets</h1>
+          <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+            The public addresses people send funds to when staking, contributing to presale, or depositing. Add, replace or retire wallets here — no code change needed.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Button onClick={() => refetch()} size="sm" className={actionBtn("ghost")}>
+            <RefreshCw className="w-3 h-3 mr-1" /> Refresh
+          </Button>
+          <Button onClick={openCreate} size="sm" className={actionBtn("green")}>
+            <Plus className="w-3 h-3 mr-1" /> Add Wallet
+          </Button>
+        </div>
+      </div>
+
+      <div className={`${cardClass} p-4 flex items-start gap-2`}>
+        <AlertTriangle className={`w-4 h-4 mt-0.5 flex-shrink-0 ${isDark ? 'text-yellow-400' : 'text-yellow-600'}`} />
+        <p className={`text-xs ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+          Only ever enter a <strong>public wallet address</strong> here — never a private key or seed phrase. Only one wallet per network should normally be marked Active at a time; retire the old one before activating a new one.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { label: "Total Wallets", value: rows.length, color: isDark ? 'text-white' : 'text-black' },
+          { label: "Active", value: rows.filter(r => r.isActive === 1).length, color: "text-green-400" },
+          { label: "Retired", value: rows.filter(r => r.isActive === 0).length, color: "text-red-400" },
+        ].map(s => (
+          <div key={s.label} className={`${cardClass} p-4 text-center`}>
+            <p className={`text-2xl font-black ${s.color}`}>{s.value}</p>
+            <p className={`text-xs mt-1 uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{s.label}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className={`${cardClass} p-5`}>
+        {isLoading ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2" />
+            Loading wallets...
+          </div>
+        ) : rows.length === 0 ? (
+          <div className={`text-center py-12 text-xs ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
+            <Wallet className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            No deposit wallets yet. Click "Add Wallet" to add the first one.
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className={`border-b ${isDark ? 'border-white/10' : 'border-black/10'}`}>
+                  {["Label", "Network", "Address", "Status", "Added", "Actions"].map(h => (
+                    <th key={h} className={`text-left pb-3 text-xs font-bold uppercase tracking-wider ${isDark ? 'text-gray-500' : 'text-gray-500'} pr-3`}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map(row => (
+                  <tr key={row.id} className={`border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'} ${row.isActive === 0 ? 'opacity-50' : ''}`}>
+                    <td className="py-3 pr-3 min-w-[120px]">
+                      <p className={`font-bold text-xs ${isDark ? 'text-white' : 'text-black'}`}>{row.label}</p>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${isDark ? 'bg-white/10 text-gray-300' : 'bg-black/5 text-gray-700'}`}>
+                        {row.network}
+                      </span>
+                    </td>
+                    <td className={`py-3 pr-3 font-mono text-xs ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span>{row.address.length > 18 ? `${row.address.slice(0, 8)}...${row.address.slice(-6)}` : row.address}</span>
+                        <button onClick={() => copyAddress(row.address)} className={isDark ? 'text-gray-500 hover:text-white' : 'text-gray-400 hover:text-black'} title="Copy address">
+                          <Copy className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="py-3 pr-3">
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
+                        row.isActive === 1
+                          ? 'bg-green-900/30 text-green-400 border border-green-700/30'
+                          : 'bg-red-900/30 text-red-400 border border-red-700/30'
+                      }`}>
+                        {row.isActive === 1 ? 'Active' : 'Retired'}
+                      </span>
+                    </td>
+                    <td className={`py-3 pr-3 text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      {new Date(row.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="py-3">
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          onClick={() => openEdit(row)}
+                          size="sm"
+                          className={actionBtn("ghost")}
+                          title="Edit"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                        </Button>
+                        <Button
+                          onClick={() => setActiveMut.mutate({ id: row.id, isActive: row.isActive !== 1 })}
+                          size="sm"
+                          className={actionBtn(row.isActive === 1 ? "red" : "green")}
+                          disabled={setActiveMut.isPending}
+                          title={row.isActive === 1 ? 'Retire wallet' : 'Activate wallet'}
+                        >
+                          {row.isActive === 1 ? <Ban className="w-3 h-3" /> : <CheckCircle className="w-3 h-3" />}
+                        </Button>
+                        <Button
+                          onClick={() => setDeleteConfirm(row.id)}
+                          size="sm"
+                          className={actionBtn("red")}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Add / Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`${cardClass} p-6 w-full max-w-md relative`}>
+            <button
+              onClick={closeModal}
+              className={`absolute top-4 right-4 ${isDark ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-black'}`}
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2 mb-5">
+              <Wallet className={`w-5 h-5 ${isDark ? 'text-white' : 'text-black'}`} />
+              <h2 className={`text-lg font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>
+                {editingId != null ? 'Edit Wallet' : 'Add Deposit Wallet'}
+              </h2>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Label</label>
+                <input
+                  value={form.label}
+                  onChange={e => setForm(f => ({ ...f, label: e.target.value }))}
+                  placeholder="e.g. Main ETH Treasury"
+                  className={inputClass}
+                />
+                {formErrors.label && <p className="text-xs text-red-400 mt-1">{formErrors.label}</p>}
+              </div>
+
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Network</label>
+                <select
+                  value={form.network}
+                  onChange={e => setForm(f => ({ ...f, network: e.target.value }))}
+                  className={inputClass}
+                >
+                  {NETWORK_OPTIONS.map(n => (
+                    <option key={n} value={n}>{n.charAt(0).toUpperCase() + n.slice(1)}</option>
+                  ))}
+                </select>
+                {formErrors.network && <p className="text-xs text-red-400 mt-1">{formErrors.network}</p>}
+              </div>
+
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Public Address</label>
+                <input
+                  value={form.address}
+                  onChange={e => setForm(f => ({ ...f, address: e.target.value }))}
+                  placeholder="0x... (public address only, never a private key)"
+                  className={`${inputClass} font-mono`}
+                />
+                {formErrors.address && <p className="text-xs text-red-400 mt-1">{formErrors.address}</p>}
+              </div>
+
+              <div>
+                <label className={`block text-xs font-bold uppercase tracking-wider mb-1 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>Notes (optional)</label>
+                <textarea
+                  value={form.notes}
+                  onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+                  placeholder="Internal notes — not shown to users"
+                  rows={2}
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-5">
+              <Button onClick={closeModal} size="sm" className={`flex-1 ${actionBtn("ghost")}`}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                size="sm"
+                className={`flex-1 ${actionBtn("green")}`}
+                disabled={saving}
+              >
+                {saving ? <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> : <Wallet className="w-3 h-3 mr-1" />}
+                {editingId != null ? 'Save Changes' : 'Add Wallet'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirm */}
+      {deleteConfirm != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className={`${cardClass} p-6 w-full max-w-sm relative`}>
+            <div className="flex items-center gap-2 mb-3">
+              <AlertTriangle className="w-5 h-5 text-red-400" />
+              <h2 className={`text-lg font-black uppercase tracking-tight ${isDark ? 'text-white' : 'text-black'}`}>Delete Wallet?</h2>
+            </div>
+            <p className={`text-xs mb-5 ${isDark ? 'text-gray-400' : 'text-gray-600'}`}>
+              This permanently removes the wallet record. This can't be undone.
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={() => setDeleteConfirm(null)} size="sm" className={`flex-1 ${actionBtn("ghost")}`}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => deleteMut.mutate({ id: deleteConfirm })}
+                size="sm"
+                className={`flex-1 ${actionBtn("red")}`}
+                disabled={deleteMut.isPending}
+              >
+                {deleteMut.isPending ? <RefreshCw className="w-3 h-3 mr-1 animate-spin" /> : <Trash2 className="w-3 h-3 mr-1" />}
+                Delete
               </Button>
             </div>
           </div>
