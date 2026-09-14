@@ -645,6 +645,52 @@ export async function getDashboardOverview(userId: number) {
   };
 }
 
+// ─── Admin Overview Stats (real counts only — no mock/placeholder data) ────
+
+export async function getAdminOverviewStats() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const [userCountRows, tokenCountRows, botTradeCountRows, recentUsersRows, recentTokensRows, allUsers, allTokens] = await Promise.all([
+    db.select({ count: count() }).from(users),
+    db.select({ count: count() }).from(tokens),
+    db.select({ count: count() }).from(botTrades),
+    db.select({ id: users.id, name: users.name, email: users.email, createdAt: users.createdAt }).from(users).orderBy(desc(users.createdAt)).limit(5),
+    db.select({ id: tokens.id, name: tokens.name, symbol: tokens.symbol, createdAt: tokens.createdAt }).from(tokens).orderBy(desc(tokens.createdAt)).limit(5),
+    db.select({ createdAt: users.createdAt }).from(users),
+    db.select({ createdAt: tokens.createdAt }).from(tokens),
+  ]);
+
+  // Bucket real signups/token-creations into the last 7 days for the charts —
+  // no synthetic numbers, days with nothing that happened just show 0.
+  const dayBuckets: { day: string; date: string; users: number; tokens: number }[] = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateKey = d.toISOString().slice(0, 10);
+    dayBuckets.push({ day: d.toLocaleDateString('en-US', { weekday: 'short' }), date: dateKey, users: 0, tokens: 0 });
+  }
+  const bucketMap = new Map(dayBuckets.map(b => [b.date, b]));
+  for (const u of allUsers) {
+    const bucket = bucketMap.get(new Date(u.createdAt).toISOString().slice(0, 10));
+    if (bucket) bucket.users += 1;
+  }
+  for (const t of allTokens) {
+    const bucket = bucketMap.get(new Date(t.createdAt).toISOString().slice(0, 10));
+    if (bucket) bucket.tokens += 1;
+  }
+
+  return {
+    totalUsers: userCountRows[0]?.count ?? 0,
+    tokensCreated: tokenCountRows[0]?.count ?? 0,
+    activeBots: botTradeCountRows[0]?.count ?? 0,
+    recentUsers: recentUsersRows,
+    recentTokens: recentTokensRows,
+    dailyChart: dayBuckets,
+  };
+}
+
 // ─── Deposit Wallet Helpers (admin-managed public addresses) ───────────────
 
 export async function listDepositWallets() {

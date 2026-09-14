@@ -31,6 +31,7 @@ import {
   findUserByVerificationToken,
   markEmailVerified,
   getDashboardOverview,
+  getAdminOverviewStats,
   listDepositWallets,
   listActiveDepositWallets,
   createDepositWallet,
@@ -512,6 +513,22 @@ export const appRouter = router({
           stats: { tokenCount: 0, stakeCount: 0, tradeCount: 0 },
         };
       }
+    }),
+  }),
+
+  /** Admin dashboard overview — real DB counts only, never placeholder/demo numbers */
+  adminStats: router({
+    overview: protectedProcedure.query(async ({ ctx }) => {
+      if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+      const data = await getAdminOverviewStats();
+      return data ?? {
+        totalUsers: 0,
+        tokensCreated: 0,
+        activeBots: 0,
+        recentUsers: [],
+        recentTokens: [],
+        dailyChart: [],
+      };
     }),
   }),
 

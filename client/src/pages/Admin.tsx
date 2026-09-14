@@ -91,14 +91,20 @@ const MOCK_STAKING_POOLS: StakingPool[] = [
   { id: 3, token: "Ethereum", symbol: "ETH", apy: 10, totalStaked: "$87,000", stakers: 121, enabled: true },
 ];
 
-const VOLUME_CHART = [
-  { day: "Mon", volume: 42000 }, { day: "Tue", volume: 68000 }, { day: "Wed", volume: 55000 },
-  { day: "Thu", volume: 91000 }, { day: "Fri", volume: 73000 }, { day: "Sat", volume: 48000 }, { day: "Sun", volume: 62000 },
-];
-const USER_CHART = [
-  { day: "Mon", users: 18 }, { day: "Tue", users: 24 }, { day: "Wed", users: 15 },
-  { day: "Thu", users: 32 }, { day: "Fri", users: 28 }, { day: "Sat", users: 11 }, { day: "Sun", users: 19 },
-];
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function timeAgo(iso: string | number | Date): string {
+  const then = new Date(iso).getTime();
+  const diffMs = Date.now() - then;
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 // ─── Sidebar Items ────────────────────────────────────────────────────────────
 
@@ -171,6 +177,9 @@ export default function Admin() {
     volume: '—',
     lastActive: new Date(u.lastSignedIn).toLocaleDateString(),
   })), [dbUsers]);
+
+  // Overview stats — real DB data, no mock/demo numbers
+  const { data: overviewStats, isLoading: overviewLoading } = trpc.adminStats.overview.useQuery();
 
   // Transactions state
   const [txFilter, setTxFilter] = useState("all");
@@ -421,122 +430,105 @@ export default function Admin() {
             <div className="space-y-6">
               <div>
                 <h1 className={`text-3xl font-black uppercase tracking-tighter ${isDark ? 'text-white' : 'text-black'}`}>Overview</h1>
-                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Platform health at a glance</p>
+                <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Platform health at a glance — live data from the database</p>
               </div>
 
-              {/* Stats */}
+              {/* Stats — real counts only */}
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
-                  { label: "Total Users", value: "1,247", change: "+12 today", icon: <Users className="w-5 h-5" />, color: "text-blue-400" },
-                  { label: "Total Volume", value: "$2.4M", change: "+$48K today", icon: <DollarSign className="w-5 h-5" />, color: "text-green-400" },
-                  { label: "Tokens Created", value: "314", change: "+8 today", icon: <Coins className="w-5 h-5" />, color: "text-purple-400" },
-                  { label: "Active Bots", value: "89", change: "+3 today", icon: <Bot className="w-5 h-5" />, color: "text-orange-400" },
+                  { label: "Total Users", value: overviewStats?.totalUsers ?? 0, icon: <Users className="w-5 h-5" />, color: "text-blue-400", note: null as string | null },
+                  { label: "Total Volume", value: "$0", icon: <DollarSign className="w-5 h-5" />, color: "text-green-400", note: "Not tracked yet" },
+                  { label: "Tokens Created", value: overviewStats?.tokensCreated ?? 0, icon: <Coins className="w-5 h-5" />, color: "text-purple-400", note: null },
+                  { label: "Active Bots", value: overviewStats?.activeBots ?? 0, icon: <Bot className="w-5 h-5" />, color: "text-orange-400", note: "Bot trading not built yet" },
                 ].map(stat => (
                   <div key={stat.label} className={`${cardClass} p-4`}>
                     <div className={`mb-2 ${stat.color}`}>{stat.icon}</div>
                     <p className={`${labelClass} mb-1`}>{stat.label}</p>
-                    <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-black'}`}>{stat.value}</p>
-                    <p className="text-xs text-green-400 font-bold mt-1">{stat.change}</p>
+                    <p className={`text-2xl font-black ${isDark ? 'text-white' : 'text-black'}`}>
+                      {overviewLoading ? '—' : stat.value.toLocaleString()}
+                    </p>
+                    {stat.note && <p className={`text-xs mt-1 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{stat.note}</p>}
                   </div>
                 ))}
               </div>
 
-              {/* Charts */}
+              {/* Charts — real signups/token creations, bucketed by day */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <div className={`${cardClass} p-5`}>
-                  <p className={`${labelClass} mb-4`}>7-Day Volume (USD)</p>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <BarChart data={VOLUME_CHART} barSize={20}>
-                      <XAxis dataKey="day" tick={{ fontSize: 11, fill: isDark ? '#666' : '#999' }} axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <Tooltip {...tooltipStyle} formatter={(v: number) => [`$${(v / 1000).toFixed(0)}K`, "Volume"]} />
-                      <Bar dataKey="volume" fill={isDark ? '#ffffff' : '#000000'} radius={[4, 4, 0, 0]} opacity={0.8} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
                 <div className={`${cardClass} p-5`}>
                   <p className={`${labelClass} mb-4`}>7-Day New Users</p>
                   <ResponsiveContainer width="100%" height={160}>
-                    <LineChart data={USER_CHART}>
+                    <LineChart data={overviewStats?.dailyChart ?? []}>
                       <XAxis dataKey="day" tick={{ fontSize: 11, fill: isDark ? '#666' : '#999' }} axisLine={false} tickLine={false} />
-                      <YAxis hide />
+                      <YAxis hide allowDecimals={false} />
                       <Tooltip {...tooltipStyle} formatter={(v: number) => [v, "New Users"]} />
                       <Line dataKey="users" stroke={isDark ? '#ffffff' : '#000000'} strokeWidth={2} dot={{ r: 3, fill: isDark ? '#fff' : '#000' }} />
                     </LineChart>
                   </ResponsiveContainer>
                 </div>
+                <div className={`${cardClass} p-5`}>
+                  <p className={`${labelClass} mb-4`}>7-Day Tokens Created</p>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <BarChart data={overviewStats?.dailyChart ?? []} barSize={20}>
+                      <XAxis dataKey="day" tick={{ fontSize: 11, fill: isDark ? '#666' : '#999' }} axisLine={false} tickLine={false} />
+                      <YAxis hide allowDecimals={false} />
+                      <Tooltip {...tooltipStyle} formatter={(v: number) => [v, "Tokens"]} />
+                      <Bar dataKey="tokens" fill={isDark ? '#ffffff' : '#000000'} radius={[4, 4, 0, 0]} opacity={0.8} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
 
-              {/* Presale Progress + Top Tokens */}
+              {/* Presale Progress + Recently Created Tokens */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div className={`${cardClass} p-5`}>
                   <p className={`${labelClass} mb-4`}>Presale Progress</p>
-                  <div className="space-y-3">
-                    {[
-                      { tier: "Tier 1 — Early Bird", sold: 100, total: 100, price: "$0.15" },
-                      { tier: "Tier 2 — Standard", sold: 72, total: 100, price: "$0.20" },
-                      { tier: "Tier 3 — Late Stage", sold: 30, total: 100, price: "$0.25" },
-                    ].map(t => (
-                      <div key={t.tier}>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{t.tier}</span>
-                          <span className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{t.sold}% · {t.price}</span>
-                        </div>
-                        <div className={`h-2 rounded-full overflow-hidden ${isDark ? 'bg-white/10' : 'bg-black/10'}`}>
-                          <div className={`h-full rounded-full transition-all ${t.sold === 100 ? 'bg-green-500' : isDark ? 'bg-white' : 'bg-black'}`} style={{ width: `${t.sold}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                    <p className={`text-xs mt-2 ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>Total raised: <span className="font-bold text-green-400">$1,250,000</span> / $2,000,000</p>
-                  </div>
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                    No presale is configured yet — this section was previously showing made-up numbers and has been cleared until presale/investing is actually built.
+                  </p>
                 </div>
 
                 <div className={`${cardClass} p-5`}>
-                  <p className={`${labelClass} mb-4`}>Top Tokens by Volume</p>
-                  <div className="space-y-2">
-                    {[
-                      { symbol: "VG", name: "Vault Genesis", volume: "$2.4M", change: "+12.4%" },
-                      { symbol: "MOON", name: "Moon Coin", volume: "$180K", change: "+5.2%" },
-                      { symbol: "DOGEP", name: "Doge Plus", volume: "$42K", change: "-1.8%" },
-                    ].map((t, i) => (
-                      <div key={t.symbol} className={`flex items-center gap-3 py-2 border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                        <span className={`text-xs font-black w-5 ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>#{i + 1}</span>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-black'}`}>{t.symbol[0]}</div>
-                        <div className="flex-1">
-                          <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{t.symbol}</p>
-                          <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{t.name}</p>
+                  <p className={`${labelClass} mb-4`}>Recently Created Tokens</p>
+                  {overviewStats?.recentTokens && overviewStats.recentTokens.length > 0 ? (
+                    <div className="space-y-2">
+                      {overviewStats.recentTokens.map((t) => (
+                        <div key={t.id} className={`flex items-center gap-3 py-2 border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-black ${isDark ? 'bg-white/10 text-white' : 'bg-black/10 text-black'}`}>{t.symbol[0]}</div>
+                          <div className="flex-1">
+                            <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{t.symbol}</p>
+                            <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{t.name}</p>
+                          </div>
+                          <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{timeAgo(t.createdAt)}</p>
                         </div>
-                        <div className="text-right">
-                          <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{t.volume}</p>
-                          <p className={`text-xs font-bold ${t.change.startsWith('+') ? 'text-green-400' : 'text-red-400'}`}>{t.change}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>
+                      No tokens created yet — the Token Creator deploys real contracts on-chain but doesn't currently save a record here.
+                    </p>
+                  )}
                 </div>
               </div>
 
-              {/* Recent Activity */}
+              {/* Recent Activity — real user signups */}
               <div className={`${cardClass} p-5`}>
                 <p className={`${labelClass} mb-4`}>Recent Activity</p>
-                <div className="space-y-2">
-                  {[
-                    { action: "New user registered", detail: "alice@example.com", time: "2m ago", icon: <Users className="w-3 h-3" />, color: "text-blue-400" },
-                    { action: "Token deployed", detail: "MOON — 500M supply", time: "8m ago", icon: <Coins className="w-3 h-3" />, color: "text-purple-400" },
-                    { action: "Presale contribution", detail: "$1,200 — 6,000 VG", time: "15m ago", icon: <Rocket className="w-3 h-3" />, color: "text-green-400" },
-                    { action: "Bot activated", detail: "Scalping Bot #3", time: "32m ago", icon: <Bot className="w-3 h-3" />, color: "text-orange-400" },
-                    { action: "User banned", detail: "dave@example.com", time: "1h ago", icon: <Ban className="w-3 h-3" />, color: "text-red-400" },
-                  ].map((item, i) => (
-                    <div key={i} className={`flex items-center gap-3 py-2 border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
-                      <span className={item.color}>{item.icon}</span>
-                      <div className="flex-1">
-                        <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>{item.action}</p>
-                        <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{item.detail}</p>
+                {overviewStats?.recentUsers && overviewStats.recentUsers.length > 0 ? (
+                  <div className="space-y-2">
+                    {overviewStats.recentUsers.map((u) => (
+                      <div key={u.id} className={`flex items-center gap-3 py-2 border-b last:border-0 ${isDark ? 'border-white/5' : 'border-black/5'}`}>
+                        <span className="text-blue-400"><Users className="w-3 h-3" /></span>
+                        <div className="flex-1">
+                          <p className={`text-xs font-bold ${isDark ? 'text-white' : 'text-black'}`}>New user registered</p>
+                          <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>{u.email ?? u.name ?? 'Unknown'}</p>
+                        </div>
+                        <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{timeAgo(u.createdAt)}</p>
                       </div>
-                      <p className={`text-xs ${isDark ? 'text-gray-600' : 'text-gray-400'}`}>{item.time}</p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className={`text-xs ${isDark ? 'text-gray-500' : 'text-gray-500'}`}>No recent activity.</p>
+                )}
               </div>
             </div>
           )}
