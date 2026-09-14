@@ -30,6 +30,154 @@ export async function runMigrations() {
   const db = await getDb();
   if (!db) return;
 
+  // Full baseline schema (mirrors drizzle/schema.ts / migrations 0000-0006).
+  // IF NOT EXISTS makes this a no-op on a database that already has these
+  // tables — it only matters (and matters a lot) if the app ever finds
+  // itself pointed at a fresh/empty database, e.g. after the DB service was
+  // recreated. Without this, a fresh database would leave the whole site
+  // unable to log in or query anything, with no way to recover except a
+  // manual SQL run.
+  const baselineTables: [string, ReturnType<typeof sql>][] = [
+    ["users", sql`
+      CREATE TABLE IF NOT EXISTS \`users\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`openId\` varchar(64) NOT NULL,
+        \`name\` text,
+        \`email\` varchar(320),
+        \`username\` varchar(64),
+        \`passwordHash\` varchar(256),
+        \`loginMethod\` varchar(64),
+        \`role\` enum('user','admin') NOT NULL DEFAULT 'user',
+        \`walletAddress\` varchar(64),
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`updatedAt\` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+        \`lastSignedIn\` timestamp NOT NULL DEFAULT (now()),
+        \`emailVerified\` int NOT NULL DEFAULT 0,
+        \`verificationToken\` varchar(128),
+        \`verificationTokenExpiry\` timestamp,
+        \`isBanned\` int NOT NULL DEFAULT 0,
+        CONSTRAINT \`users_id\` PRIMARY KEY(\`id\`),
+        CONSTRAINT \`users_openId_unique\` UNIQUE(\`openId\`)
+      )
+    `],
+    ["tokens", sql`
+      CREATE TABLE IF NOT EXISTS \`tokens\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`creatorId\` int NOT NULL,
+        \`name\` varchar(128) NOT NULL,
+        \`symbol\` varchar(16) NOT NULL,
+        \`description\` text,
+        \`decimals\` int NOT NULL DEFAULT 9,
+        \`initialSupply\` bigint NOT NULL,
+        \`logoUrl\` text,
+        \`contractAddress\` varchar(64),
+        \`status\` enum('pending','deployed','failed') NOT NULL DEFAULT 'pending',
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        CONSTRAINT \`tokens_id\` PRIMARY KEY(\`id\`)
+      )
+    `],
+    ["presales", sql`
+      CREATE TABLE IF NOT EXISTS \`presales\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`tokenId\` int NOT NULL,
+        \`creatorId\` int NOT NULL,
+        \`title\` varchar(128) NOT NULL,
+        \`description\` text,
+        \`targetAmount\` decimal(18,6) NOT NULL,
+        \`raisedAmount\` decimal(18,6) NOT NULL DEFAULT '0',
+        \`tokenPrice\` decimal(18,8) NOT NULL,
+        \`minContribution\` decimal(18,6) NOT NULL DEFAULT '10',
+        \`maxContribution\` decimal(18,6) NOT NULL DEFAULT '10000',
+        \`startDate\` timestamp NOT NULL,
+        \`endDate\` timestamp NOT NULL,
+        \`status\` enum('upcoming','active','ended','cancelled') NOT NULL DEFAULT 'upcoming',
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        CONSTRAINT \`presales_id\` PRIMARY KEY(\`id\`)
+      )
+    `],
+    ["contributions", sql`
+      CREATE TABLE IF NOT EXISTS \`contributions\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`presaleId\` int NOT NULL,
+        \`userId\` int NOT NULL,
+        \`amount\` decimal(18,6) NOT NULL,
+        \`tokensReceived\` decimal(18,6) NOT NULL,
+        \`txHash\` varchar(128),
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        CONSTRAINT \`contributions_id\` PRIMARY KEY(\`id\`)
+      )
+    `],
+    ["stakes", sql`
+      CREATE TABLE IF NOT EXISTS \`stakes\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`userId\` int NOT NULL,
+        \`tokenSymbol\` varchar(16) NOT NULL,
+        \`amount\` decimal(18,6) NOT NULL,
+        \`apy\` decimal(5,2) NOT NULL,
+        \`earnedRewards\` decimal(18,6) NOT NULL DEFAULT '0',
+        \`status\` enum('active','unstaked') NOT NULL DEFAULT 'active',
+        \`stakedAt\` timestamp NOT NULL DEFAULT (now()),
+        \`unstakedAt\` timestamp,
+        CONSTRAINT \`stakes_id\` PRIMARY KEY(\`id\`)
+      )
+    `],
+    ["botTrades", sql`
+      CREATE TABLE IF NOT EXISTS \`botTrades\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`userId\` int NOT NULL,
+        \`botName\` varchar(64) NOT NULL,
+        \`strategy\` enum('scalping','arbitrage','momentum') NOT NULL,
+        \`pair\` varchar(16) NOT NULL,
+        \`side\` enum('buy','sell') NOT NULL,
+        \`price\` decimal(18,8) NOT NULL,
+        \`amount\` decimal(18,6) NOT NULL,
+        \`profit\` decimal(18,6) NOT NULL DEFAULT '0',
+        \`status\` enum('open','closed','cancelled') NOT NULL DEFAULT 'open',
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`closedAt\` timestamp,
+        CONSTRAINT \`botTrades_id\` PRIMARY KEY(\`id\`)
+      )
+    `],
+    ["apiTokens", sql`
+      CREATE TABLE IF NOT EXISTS \`apiTokens\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`userId\` int NOT NULL,
+        \`token\` varchar(128) NOT NULL,
+        \`label\` varchar(64) NOT NULL DEFAULT 'Default',
+        \`isRevoked\` int NOT NULL DEFAULT 0,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`lastUsedAt\` timestamp,
+        \`revokedAt\` timestamp,
+        CONSTRAINT \`apiTokens_id\` PRIMARY KEY(\`id\`),
+        CONSTRAINT \`apiTokens_token_unique\` UNIQUE(\`token\`)
+      )
+    `],
+    ["adminCredentials", sql`
+      CREATE TABLE IF NOT EXISTS \`adminCredentials\` (
+        \`id\` int AUTO_INCREMENT NOT NULL,
+        \`userId\` int NOT NULL,
+        \`username\` varchar(64) NOT NULL,
+        \`passwordHash\` varchar(256) NOT NULL,
+        \`createdBy\` int NOT NULL,
+        \`createdAt\` timestamp NOT NULL DEFAULT (now()),
+        \`lastLoginAt\` timestamp,
+        \`isActive\` int NOT NULL DEFAULT 1,
+        CONSTRAINT \`adminCredentials_id\` PRIMARY KEY(\`id\`),
+        CONSTRAINT \`adminCredentials_userId_unique\` UNIQUE(\`userId\`),
+        CONSTRAINT \`adminCredentials_username_unique\` UNIQUE(\`username\`)
+      )
+    `],
+  ];
+
+  for (const [name, statement] of baselineTables) {
+    try {
+      await db.execute(statement);
+    } catch (error) {
+      console.error(`[Migrate] Failed to ensure ${name} table:`, error);
+    }
+  }
+  console.log("[Migrate] Baseline schema ready");
+
   try {
     await db.execute(sql`
       CREATE TABLE IF NOT EXISTS \`depositWallets\` (
